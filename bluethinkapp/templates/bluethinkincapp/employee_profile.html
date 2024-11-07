@@ -1,0 +1,236 @@
+{% extends 'base.html' %}
+
+{% block title %}Employee Profile{% endblock %}
+
+{% block content %}
+<!-- Bootstrap CSS -->
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+
+<div class="container mt-5">
+    <h1 class="text-center mb-4">Employee Profile</h1>
+
+    <!-- Display success and error messages -->
+    {% if messages %}
+        <div class="alert-messages">
+            {% for message in messages %}
+                <div class="alert {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <!-- Basic Information Section (Always Visible) -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h2>Basic Information</h2>
+        </div>
+        <div class="card-body">
+            <p><strong>Name:</strong> {{ employee.first_name }} {{ employee.last_name }}</p>
+            <p><strong>Email:</strong> {{ employee.email }}</p>
+            <p><strong>Date of Birth:</strong> {{ employee.date_of_birth }}</p>
+            <p><strong>Gender:</strong> {{ employee.gender }}</p>
+            <p><strong>Blood Group:</strong> {{ employee.blood_group }}</p>
+            <p><strong>Date of Joining:</strong> {{ employee.date_of_joining }}</p>
+        </div>
+    </div>
+
+    <!-- Account Details Section -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h3>Account Details</h3>
+            <button class="btn btn-primary" onclick="toggleForm('accountForm')">Edit</button>
+        </div>
+        <div class="card-body">
+            <p><strong>Bank Name:</strong> {{ employee.bank_name }}</p>
+            <p><strong>Account Number:</strong> {{ employee.account_number }}</p>
+            <p><strong>IFSC Code:</strong> {{ employee.account_number }}</p>
+            <!-- Account form (hidden by default) -->
+            <form id="accountForm" style="display:none;" method="post">
+                {% csrf_token %}
+                {{ account_form.as_p }}
+                <button type="submit" name="account_details" class="btn btn-success">Save Account Details</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Current Address Section -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h3>Current Address</h3>
+            <button class="btn btn-primary" onclick="toggleForm('currentAddressForm')">Edit</button>
+        </div>
+        <div class="card-body">
+            <p><strong>Address:</strong> {{ employee.current_street }}</p>
+            <p><strong>City:</strong> {{ employee.current_city }}</p>
+            <p><strong>State:</strong> {{ employee.current_state }}</p>
+            <p><strong>Country:</strong> {{ employee.current_country }}</p>
+            <p><strong>Pincode:</strong> {{ employee.current_pincode }}</p>
+            <!-- Current address form (hidden by default) -->
+            <!-- Current address form (hidden by default) -->
+            <form id="currentAddressForm" style="display:none;" method="post">
+                {% csrf_token %}
+                {{ current_address_form.as_p }}
+                <button type="submit" name="current_address" class="btn btn-success">Save Current Address</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Permanent Address Section -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h3>Permanent Address</h3>
+            <button class="btn btn-primary" onclick="toggleForm('permanentAddressForm')">Edit</button>
+        </div>
+        <div class="card-body">
+            <p><strong>Address:</strong> {{ employee.permanent_street }}</p>
+            <p><strong>City:</strong> {{ employee.permanent_city }}</p>
+            <p><strong>State:</strong> {{ employee.permanent_state }}</p>
+            <p><strong>Country:</strong> {{ employee.permanent_country }}</p>
+            <p><strong>Pincode:</strong> {{ employee.permanent_pincode }}</p>        <!-- Permanent address form (hidden by default) -->          <!-- Permanent address form (hidden by default) -->
+            <form id="permanentAddressForm" style="display:none;" method="post">
+                {% csrf_token %}
+                {{ permanent_address_form.as_p }}
+                <button type="submit" name="permanent_address" class="btn btn-success">Save Permanent Address</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Family Details Section -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h3>Family Details</h3>
+            <button class="btn btn-primary" onclick="toggleForm('familyDetailsForm')">Edit</button>
+        </div>
+        <div class="card-body">
+            <p><strong>Spouse Name:</strong> {{ employee.father_name }}</p>
+            <p><strong>Children:</strong> {{ employee.mother_name }}</p>
+            <p><strong>Spouse Name:</strong> {{ employee.spouse_name }}</p>
+            <p><strong>Children:</strong> {{ employee.contact_number}}</p>
+            <!-- Family details form (hidden by default) -->
+            <form id="familyDetailsForm" style="display:none;" method="post">
+                {% csrf_token %}
+                {{ family_details_form.as_p }}
+                <button type="submit" name="family_details" class="btn btn-success">Save Family Details</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Education Details Section -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h3>Education Details</h3>
+            <button class="btn btn-primary" onclick="toggleForm('educationDetailsForm')">Edit</button>
+        </div>
+        <div class="card-body">
+            <p><strong>Degree:</strong> {{ employee.high_school }}</p>
+            <p><strong>intermediate:</strong> {{ employee.intermediate }}</p>
+            <p><strong>Graduation:</strong> {{ employee.graduation }}</p>
+            <p><strong>Post Graduation:</strong> {{ employee.post_graduation }}</p>
+            <p><strong>Other Qualification:</strong> {{ employee.other_qualification }}<
+            <!-- Education details form (hidden by default) -->
+            <form id="educationDetailsForm" style="display:none;" method="post">
+                {% csrf_token %}
+                {{ education_details_form.as_p }}
+                <button type="submit" name="education_details" class="btn btn-success">Save Education Details</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Communication Details Section -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h3>Communication Details</h3>
+            <button class="btn btn-primary" onclick="toggleForm('communicationDetailsForm')">Edit</button>
+        </div>
+        <div class="card-body">
+            <p><strong>Phone:</strong> {{ employee.mobile_number }}</p>
+            <p><strong>Compamy Email:</strong> {{ employee.company_email }}</p>
+            <p><strong>Internal Email:</strong> {{ employee.internal_email }}</p>
+            <p><strong>Personal Email:</strong> {{ employee.personal_email }}</p>
+
+            <form id="communicationDetailsForm" style="display:none;" method="post">
+                {% csrf_token %}
+                {{ communication_details_form.as_p }}
+                <button type="submit" name="communication_details" class="btn btn-success">Save Communication Details</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Document Section -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h3>Document Section</h3>
+            <button class="btn btn-primary" onclick="toggleForm('documentSectionForm')">Edit</button>
+        </div>
+        <div class="card-body">
+            <p><strong>Adhar Number:</strong> {{ employee.aadhar_number }}</p>
+            <p><strong>Adhar Document:</strong> {{ employee.aadhar_doc }}</p>
+            <p><strong>Pan Number:</strong> {{ employee.pan_number }}</p>
+            <p><strong>Pan Documenets:</strong> {{ employee.pan_doc }}</p>
+            <p><strong>Offer Letter:</strong> {{ employee.offer_letter }}</p>
+            <p><strong>Relieving Letter:</strong> {{ employee.relieving_letter }}</p>
+            <p><strong>Resignation Letter:</strong> {{ employee.resignation_letter }}</p>
+            <p><strong>Appointment Letter:</strong> {{ employee.appointment_letter }}</p>
+            <p><strong>Bank Statement:</strong> {{ employee.bank_statement }}</p>
+            <p><strong>salary_slip1:</strong> {{ employee.salary_slip1 }}</p>
+            <p><strong>salary_slip2:</strong> {{ employee.salary_slip2 }}</p>
+            <p><strong>salary_slip3:</strong> {{ employee.salary_slip3 }}</p>
+
+
+            
+
+
+            <!-- Document upload form (hidden by default) -->
+            <form id="documentSectionForm" style="display:none;" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {{ document_section_form.as_p }}
+                <button type="submit" name="document_section" class="btn btn-success">Upload Documents</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Previous Employment Details Section -->
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h3>Previous Employment Details</h3>
+            <button class="btn btn-primary" onclick="toggleForm('previousEmploymentDetailsForm')">Edit</button>
+        </div>
+        <div class="card-body">
+            <p><strong>Previous Company Name </strong> {{ employee.previous_company_name }}</p>
+            <p><strong>start_date:</strong> {{ employee.start_date }}</p>
+            <p><strong>end_date:</strong> {{ employee.end_date }}</p>
+            <p><strong>previous_role:</strong> {{ employee.previous_role }}</p>
+            <p><strong>reference_name:</strong> {{ employee.reference_name }}</p>
+            <p><strong>reference_email:</strong> {{ employee.reference_email }}</p>
+            <p><strong>reference_mobile:</strong> {{ employee.reference_mobile }}</p>
+            <p><strong>reference_role:</strong> {{ employee.reference_role }}</p>
+            <!-- Previous employment details form (hidden by default) -->
+            <form id="previousEmploymentDetailsForm" style="display:none;" method="post">
+                {% csrf_token %}
+                {{ previous_employment_details_form.as_p }}
+                <button type="submit" name="previous_employment_details" class="btn btn-success">Save Previous Employment Details</button>
+            </form>
+        </div>
+    </div>
+
+</div>
+
+<!-- Bootstrap JS and dependencies -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<!-- JavaScript to toggle forms -->
+<script>
+    function toggleForm(formId) {
+        var form = document.getElementById(formId);
+        if (form.style.display === "none") {
+            form.style.display = "block";
+        } else {
+            form.style.display = "none";
+        }
+    }
+</script>
+
+{% endblock %}

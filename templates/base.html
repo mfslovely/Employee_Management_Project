@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Deshboard{% endblock %}</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <!-- Custom CSS -->
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f7f9fc;
+        }
+        .navbar {
+            background-color: #007bff;
+        }
+        .navbar-brand {
+            color: white;
+        }
+        .sidebar {
+            background-color: #343a40;
+            color: white;
+            padding: 15px;
+            height: 100vh;
+            position: fixed;
+            width: 220px;
+        }
+        .sidebar a {
+            color: white;
+            text-decoration: none;
+            display: block;
+            padding: 10px;
+            margin: 5px 0;
+        }
+        .sidebar a:hover {
+            background-color: #007bff;
+        }
+        .sidebar .profile-section {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .sidebar .profile-section img {
+            border-radius: 50%; /* Makes the profile image circular */
+            width: 100px; /* Adjust width */
+            height: 100px; /* Adjust height */
+            object-fit: cover; /* Ensures the image fills the circle without distortion */
+            margin-bottom: 10px;
+        }
+        .sidebar .profile-section h4 {
+            margin: 0;
+            font-size: 1.2rem;
+            color: #f1f1f1;
+        }
+        .sidebar .profile-section p {
+            margin-top: 5px;
+            font-size: 0.9rem;
+            color: #cccccc;
+        }
+        hr {
+            border: 1px solid #007bff;
+            margin: 15px 0;
+        }
+        .content {
+            margin-left: 240px;
+            padding: 20px;
+        }
+        footer {
+            background-color: #343a40;
+            color: white;
+            padding: 10px 0;
+            text-align: center;
+            margin-top: 30px;
+        }
+       
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-light">
+        <a class="navbar-brand" href="#">Bluethinkinc</a>
+        <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav ml-auto">
+                <li class="nav-item active">
+                    <a class="nav-link text-white" href="{% url 'dashboard' %}">Dashboard</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="{% url 'employee_profile' %}">Profile</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="#">Leave</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="#">Claims</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="#">Logout</a>
+                </li>
+            </ul>
+        </div>
+    </nav>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="profile-section text-center"> <!-- Added text-center for centering text -->
+            <div class="position-relative d-flex justify-content-center align-items-center" style="height: 120px;"> <!-- Flexbox for centering -->
+                {% if request.user.employee.profile_photo %}
+                    <img src="{{ request.user.employee.profile_photo.url }}" alt="Profile Picture" class="img-fluid rounded-circle" id="profileImage" style="width: 100px; height: 100px;">
+                {% else %}
+                    <!-- Font Awesome Default Profile Icon -->
+                    <div class="rounded-circle d-flex justify-content-center align-items-center" style="width: 100px; height: 100px; background-color: #e0e0e0;">
+                        <i class="fas fa-user fa-3x" style="color: #757575;"></i>
+                    </div>
+                {% endif %}
+                <form method="post" enctype="multipart/form-data" style="display: inline;">
+                    {% csrf_token %}
+                    <input type="file" name="profile_photo" accept="image/*" id="uploadInput" style="display: none;" onchange="this.form.submit();">
+                    <label for="uploadInput" class="btn btn-secondary btn-sm position-absolute" style="top: 70%; left: 50%; transform: translate(-50%, -50%); cursor: pointer;">Upload</label>
+                </form>
+            </div>
+            <h4>{{ request.user.employee.first_name }} {{ request.user.employee.last_name }}</h4>
+            <p>{{ request.user.employee.job_title }}</p>
+        </div>
+        <hr> <!-- Horizontal line separating profile and menu -->
+        <a href="{% url 'dashboard' %}">Dashboard</a>
+        <a href="{% url 'employee_profile' %}">My Profile</a>
+        <a href="#">Leave</a>
+        <a href="#">Time sheet</a>
+        <a href="{% url 'claims' %}">Claims</a>
+        <a href="#">Policy</a>
+        <a href="#">Salary Slip</a>
+        <a href="{% url 'logout_for_the_day' %}">Logout for the day</a>
+    </div>
+
+    <!-- Main Content -->
+    <div class="content">
+        <div class="container">
+            {% block content %}
+            <!-- Main content goes here -->
+            {% endblock %}
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+        <p>&copy; 2024 Employee Management System | All Rights Reserved</p>
+    </footer>
+
+    <!-- Bootstrap JS and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.0/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

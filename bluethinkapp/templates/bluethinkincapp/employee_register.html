@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Registration</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #070b8e; /* Blue background */
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            background-color: rgba(255, 255, 255, 0.2); /* Semi-transparent white */
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            width: 400px; /* Fixed width for the form */
+        }
+        h1 {
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        label {
+            font-weight: bold;
+        }
+        .btn-primary {
+            background-color: #070b8e;
+            border: none;
+        }
+        .btn-primary:hover {
+            background-color: #070b8e;
+        }
+        .login-link {
+            display: block;
+            margin-top: 15px;
+            text-align: center;
+            color: white;
+        }
+        .login-link a {
+            color: #ffc107; /* Yellow color for the link */
+            text-decoration: none;
+        }
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Employee Registration</h1>
+
+        {% if messages %}
+            <div class="alert alert-warning" role="alert">
+                <ul>
+                    {% for message in messages %}
+                        <li>{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+
+        <form method="post" action="{% url 'employee_register' %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="first_name">First Name:</label>
+                <input type="text" name="first_name" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label for="last_name">Last Name:</label>
+                <input type="text" name="last_name" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label for="date_of_birth">Date of Birth:</label>
+                <input type="date" name="date_of_birth" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label for="job_title">Job Title:</label>
+                <input type="text" name="job_title" class="form-control" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="date_of_joining">Date of Joining:</label>
+                <input type="date" name="date_of_joining" class="form-control" required>
+            </div>
+            
+
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" name="email" class="form-control" required>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" name="password" class="form-control" required>
+            </div>
+
+            <!-- Add other fields as needed -->
+
+            <button type="submit" class="btn btn-primary btn-block">Register</button>
+        </form>
+
+        <div class="login-link">
+            <p>Already have an account? <a href="{% url 'employee_login' %}">Login here</a></p>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS and jQuery -->
+    <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.0/dist/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+</body>
+</html>

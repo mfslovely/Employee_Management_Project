@@ -1,0 +1,94 @@
+{% extends 'base.html' %}
+{% block title %}Claims{% endblock %}
+
+{% block content %}
+<div class="container my-5">
+    <h1 class="text-center display-4 font-weight-bold">Claims</h1>
+
+    <!-- Form to add a new claim -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <h3 class="mb-0">Add New Claim</h3>
+        </div>
+        <div class="card-body">
+            <form method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="form-row">
+                    <div class="col-md-6 mb-3">
+                        {{ form.category.label_tag }}
+                        {{ form.category }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.amount.label_tag }}
+                        {{ form.amount }}
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="col-md-6 mb-3">
+                        {{ form.date_from.label_tag }}
+                        {{ form.date_from }}
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        {{ form.date_to.label_tag }}
+                        {{ form.date_to }}
+                    </div>
+                </div>
+                <div class="form-group">
+                    {{ form.description.label_tag }}
+                    {{ form.description }}
+                    <!-- Make description larger, CSS can be added to ensure better appearance -->
+                </div>
+                <div class="form-group">
+                    {{ form.claim_file.label_tag }}
+                    {{ form.claim_file }}
+                </div>
+                <button type="submit" class="btn btn-success btn-lg w-100">Submit</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- List of claims -->
+    <h2 class="mt-5 font-weight-bold">Claim List</h2>
+    <div class="table-responsive">
+        <table class="table table-hover table-bordered">
+            <thead class="thead-dark">
+                <tr>
+                    <th scope="col">No</th>
+                    <th scope="col">Category</th>
+                    <th scope="col">Amount</th>
+                    <th scope="col">From</th>
+                    <th scope="col">To</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Approved By</th>
+                    <th scope="col">Comment</th>
+                    <th scope="col">Last Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for claim in user_claims %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ claim.category }}</td>
+                    <td>{{ claim.amount }}</td>
+                    <td>{{ claim.date_from|date:"F j, Y" }}</td>
+                    <td>{{ claim.date_to|date:"F j, Y" }}</td>
+                    <td>{{ claim.status }}</td>
+                    <td>{{ claim.approved_by }}</td>
+                    <td>
+                        <!-- Limit text to 2-3 sentences -->
+                        <div style="max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            {{ claim.description }}
+                        </div>
+                    </td>
+                    <td>{{ claim.last_action|date:"F j, Y, g:i a" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" class="text-center text-muted">No claims found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

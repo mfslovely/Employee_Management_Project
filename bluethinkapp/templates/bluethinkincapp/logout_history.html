@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+
+{% block title %}Logout History{% endblock %}
+
+{% block content %}
+    <div class="container mt-5">
+        <h2 class="text-center mb-4">Login/Logout History</h2>
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    <th>Login Time</th>
+                    <th>Logout Time</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for activity in activities %}
+                    <tr>
+                        <td>{{ activity.login_time }}</td>
+                        <td>{{ activity.logout_time|default:"Still logged in" }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}
