@@ -16,7 +16,7 @@ from .forms import (
     EducationDetailsForm,
     CommunicationDetailsForm,
     DocumentSectionForm,
-    PreviousEmploymentDetailsForm,ClaimForm
+    PreviousEmploymentDetailsForm,ClaimForm,LeaveApplicationForm
 )
 
 
@@ -248,22 +248,42 @@ def logout_for_the_day(request):
 
 @login_required
 def claims(request):
-    # Handle form submission for new claims
     if request.method == 'POST':
         form = ClaimForm(request.POST, request.FILES)
         if form.is_valid():
             claim = form.save(commit=False)
-            claim.employee = request.user  # Associate the claim with the logged-in user
+            claim.employee = request.user 
             claim.save()
-            return redirect('claims')  # Refresh the page to display the new claim in the list
+            return redirect('claims')
 
     else:
-        form = ClaimForm()  # Display an empty form if it's a GET request
+        form = ClaimForm()  
 
-    # Query to get the claims submitted by the logged-in user, ordered by creation date (latest first)
+   
     user_claims = Claim.objects.filter(employee__user=request.user)
 
     return render(request, 'bluethinkincapp/claims.html', {
-        'form': form,            # Form for adding a new claim
-        'user_claims': user_claims,  # List of the user's claims
+        'form': form,           
+        'user_claims': user_claims,  
     })
+
+
+@login_required
+def leave_list(request):
+    leaves = Leave.objects.filter(employee__user=request.user)
+    return render(request, 'bluethinkincapp/leave_management.html', {'leaves': leaves})
+
+
+@login_required
+def apply_leave(request):
+    if request.method == 'POST':
+        form = LeaveApplicationForm(request.POST)
+        if form.is_valid():
+            leave = form.save(commit=False)
+            leave.employee = request.user  # Associate with the logged-in employee
+            leave.save()
+            return redirect('leave_list')  # Redirect to the leave list page
+    else:
+        form = LeaveApplicationForm()
+    
+    return render(request, 'bluethinkincapp/apply_leave.html', {'form': form})

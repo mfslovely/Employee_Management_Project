@@ -1,0 +1,66 @@
+{% extends 'base.html' %}
+{% block title %}Leave Management{% endblock %}
+{% block content %}
+    <div class="container">
+        <h1 class="text-center display-4 font-weight-bold">Leave Calendar</h1>
+
+        <!-- Apply Leave Button -->
+        <div class="mb-4 text-center">
+            <a href="{% url 'apply_leave' %}" class="btn btn-success btn-lg">Apply for Leave</a>
+        </div>
+
+        <!-- Calendar -->
+        <div id="calendar" class="mt-4"></div>
+
+        <!-- Example Calendar with Bootstrap -->
+        <div class="mt-5">
+            <h3>Leave Status Legend:</h3>
+            <ul>
+                <li><span class="badge bg-success">Present</span></li>
+                <li><span class="badge bg-danger">Absent</span></li>
+                <li><span class="badge bg-primary">Holiday</span></li>
+                <li><span class="badge bg-warning">Weekend</span></li>
+                <li><span class="badge bg-info">Leave</span></li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const calendar = document.getElementById('calendar');
+            const currentMonth = new Date().getMonth(); // Get current month
+
+            const daysInMonth = new Date(new Date().getFullYear(), currentMonth + 1, 0).getDate();
+            const startDay = new Date(new Date().getFullYear(), currentMonth, 1).getDay();
+
+            // Dynamically create the calendar
+            let calendarHTML = "<div class='row'>";
+            for (let i = 0; i < startDay; i++) {
+                calendarHTML += "<div class='col-1'></div>"; // Empty space for the first day of the month
+            }
+
+            for (let i = 1; i <= daysInMonth; i++) {
+                let leaveStatus = 'present'; // Default to present
+
+                // Check leave status for each day (you will need to fetch this data from the backend)
+                // Example:
+                if (i === 5) leaveStatus = 'absent'; // Just an example
+                if (i === 10) leaveStatus = 'holiday'; // Just an example
+
+                calendarHTML += `
+                    <div class="col-1 text-center ${leaveStatus}">
+                        <div class="calendar-day">${i}</div>
+                    </div>
+                `;
+
+                // Start a new row after 7 days (for the next week)
+                if (i % 7 === 0) {
+                    calendarHTML += "</div><div class='row'>";
+                }
+            }
+
+            calendarHTML += "</div>";
+            calendar.innerHTML = calendarHTML;
+        });
+    </script>
+{% endblock %}

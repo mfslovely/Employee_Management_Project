@@ -1,5 +1,5 @@
 from django import forms
-from .models import Employee,Claim
+from .models import Employee,Claim,Leave
 
 class AccountDetailsForm(forms.ModelForm):
     class Meta:
@@ -51,4 +51,15 @@ class ClaimForm(forms.ModelForm):
             'date_to': forms.DateInput(attrs={'type': 'date'}),
             'description': forms.Textarea(attrs={'class': 'form-control form-control-lg description-field'}),
          
+        }
+
+
+
+class LeaveApplicationForm(forms.ModelForm):
+    class Meta:
+        model = Leave
+        fields = ['leave_type', 'start_date', 'end_date', 'reason']
+        widgets = {
+            'start_date': forms.DateInput(attrs={'type': 'date'}),
+            'end_date': forms.DateInput(attrs={'type': 'date'}),
         }

@@ -13,6 +13,8 @@ urlpatterns = [
     path('my-profile/', views.employee_profile, name='employee_profile'),
     path('logout-for-the-day/', views.logout_for_the_day, name='logout_for_the_day'),
     path('claims/', views.claims, name='claims'),
+    path('leave-list',views.leave_list, name='leave_list'),
+    path('apply_leave/', views.apply_leave, name='apply_leave'),
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 
 
