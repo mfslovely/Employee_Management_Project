@@ -114,15 +114,17 @@ class LoginLogoutHistory(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.login_time} to {self.logout_time}"
+    
+class LeaveType(models.Model):
+    name = models.CharField(max_length=50)
+    half_day_type = models.CharField(max_length=20, choices=[('first_half', 'First Half'), ('second_half', 'Second Half')], null=True, blank=True)
+
 class Leave(models.Model):
     
     employee = models.ForeignKey('Employee', on_delete=models.CASCADE) 
+    leave_type = models.ForeignKey(LeaveType, on_delete=models.SET_NULL, null=True)
+    category = models.CharField(max_length=50, choices=[('casual', 'Casual'), ('without_pay', 'Leave Without Pay'), ('manager_approval', 'Manager Approval')],null=True, blank=True)
     
-    
-    leave_type = models.CharField(
-        max_length=50, 
-        choices=[('sick', 'Sick'), ('casual', 'Casual'), ('earned', 'Earned')]
-    )
     start_date = models.DateField()
     end_date = models.DateField()  
     reason = models.TextField()    

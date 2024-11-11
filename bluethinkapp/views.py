@@ -16,7 +16,7 @@ from .forms import (
     EducationDetailsForm,
     CommunicationDetailsForm,
     DocumentSectionForm,
-    PreviousEmploymentDetailsForm,ClaimForm,LeaveApplicationForm
+    PreviousEmploymentDetailsForm,ClaimForm,ApplyLeaveForm
 )
 
 
@@ -275,15 +275,30 @@ def leave_list(request):
 
 
 @login_required
-def apply_leave(request):
-    if request.method == 'POST':
-        form = LeaveApplicationForm(request.POST)
+class ApplyLeaveView(View):
+    def get(self, request):
+       
+        available_leaves = {
+            "casual": 10, 
+            "leave_without_pay": 0,
+            "manager_approval": 5
+        }
+        applied_leaves = Leave.objects.filter(employee__user=request.user)
+        form = ApplyLeaveForm()
+
+        context = {
+            "available_leaves": available_leaves,
+            "applied_leaves": applied_leaves,
+            "form": form,
+        }
+        return render(request, "apply_leave.html", context)
+
+    def post(self, request):
+        form = ApplyLeaveForm(request.POST)
         if form.is_valid():
-            leave = form.save(commit=False)
-            leave.employee = request.user  # Associate with the logged-in employee
-            leave.save()
-            return redirect('leave_list')  # Redirect to the leave list page
-    else:
-        form = LeaveApplicationForm()
-    
-    return render(request, 'bluethinkincapp/apply_leave.html', {'form': form})
+            leave_application = form.save(commit=False)
+            leave_application.employee = request.user
+            leave_application.status = 'pending'
+            leave_application.save()
+            return redirect('apply_leave')
+        return render(request, "apply_leave.html", {"form": form})

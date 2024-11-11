@@ -63,3 +63,18 @@ class LeaveApplicationForm(forms.ModelForm):
             'start_date': forms.DateInput(attrs={'type': 'date'}),
             'end_date': forms.DateInput(attrs={'type': 'date'}),
         }
+
+class ApplyLeaveForm(forms.ModelForm):
+    class Meta:
+        model = Leave
+        fields = ['category', 'leave_type', 'start_date', 'end_date', 'reason']
+        widgets = {
+            'start_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'end_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'reason': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+        }
+    
+    def __init__(self, *args, **kwargs):
+        super(ApplyLeaveForm, self).__init__(*args, **kwargs)
+        self.fields['category'].widget.attrs.update({'class': 'form-control'})
+        self.fields['leave_type'].widget.attrs.update({'class': 'form-control'})
