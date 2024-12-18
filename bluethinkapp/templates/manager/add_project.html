@@ -1,0 +1,230 @@
+{% extends 'base.html' %}
+
+{% block title %}Add Project{% endblock %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Project</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f6f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-weight: bold;
+            color: #555;
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        input, select, button {
+            width: 100%;
+            padding: 10px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: #007bff;
+        }
+
+        button {
+            background-color: #007bff;
+            color: #fff;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .error {
+            color: red;
+            font-size: 12px;
+        }
+
+        .response {
+            margin-top: 20px;
+            color: green;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Add Project</h2>
+        <form method="POST" action="{% url 'add_project' %}">
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="project_name">Project Name:</label>
+                <input
+                    type="text"
+                    id="project_name"
+                    name="project_name"
+                    placeholder="Enter new project name"
+                    value="{{ form.project_name.value|default:'' }}"
+                />
+                {% if form.project_name.errors %}
+                    <div class="error">
+                        {% for error in form.project_name.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="vendor_name">Vendor Name:</label>
+                <input
+                    type="text"
+                    id="vendor_name"
+                    name="vendor_name"
+                    placeholder="Enter vendor name"
+                    value="{{ form.vendor_name.value|default:'' }}"
+                />
+                {% if form.vendor_name.errors %}
+                    <div class="error">
+                        {% for error in form.vendor_name.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="start_date">Start Date:</label>
+                <input
+                    type="date"
+                    id="start_date"
+                    name="start_date"
+                    value="{{ formstart_date.value|default:'' }}"
+                />
+                {% if form.start_date.errors %}
+                    <div class="error">
+                        {% for error in form.start_date.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="end_date">End Date:</label>
+                <input
+                    type="date"
+                    id="end_date"
+                    name="end_date"
+                    value="{{ form.end_date.value|default:'' }}"
+                />
+                {% if form.end_date.errors %}
+                    <div class="error">
+                        {% for error in form.end_date.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+
+            <div class="form-group">
+                <label for="status">Status:</label>
+                <select
+                    id="status"
+                    name="status"
+                >
+                    <option value="active" {% if form.status.value == 'active' %}selected{% endif %}>Active</option>
+                    <option value="inactive" {% if form.status.value == 'inactive' %}selected{% endif %}>Inactive</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="project_type">Project Type:</label>
+                <select
+                    id="project_type"
+                    name="project_type"
+                >
+                    <option value="billable" {% if form.project_type.value == 'billable' %}selected{% endif %}>Billable</option>
+                    <option value="non_billable" {% if form.project_type.value == 'non_billable' %}selected{% endif %}>Non-Billable</option>
+                </select>
+            </div>
+
+            <button type="submit">Add Project</button>
+        </form>
+
+        <div>
+            <h3>Available Projects:</h3>
+            <select name="project_name">
+                <option value="">Select Project</option>
+                {% for project in projects %}
+                    <option value="{{ project.project_name }}">{{ project.project_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <div>
+            <h3>Available Vendors:</h3>
+            <select name="vendor_name">
+                <option value="">Select Vendor</option>
+                {% for project in projects %}
+                    <option value="{{ project.vendor_name }}">{{ project.vendor_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+
+        {% if responseMessage %}
+            <div class="response">{{ responseMessage }}</div>
+        {% endif %}
+    </div>
+
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const projectDropdown = document.getElementById("projectDropdown");
+        const projectNameInput = document.getElementById("project_name");
+        const vendorNameInput = document.getElementById("vendor_name");
+
+        projectDropdown.addEventListener("change", function () {
+            const selectedOption = projectDropdown.options[projectDropdown.selectedIndex];
+            const vendorName = selectedOption.getAttribute("data-vendor");
+
+            // Update input fields based on selection
+            projectNameInput.value = selectedOption.value;
+            vendorNameInput.value = vendorName || ""; // Fallback to empty if no vendor name
+        });
+    });
+</script>
+
+</body>
+</html>
+
+{% endblock %}

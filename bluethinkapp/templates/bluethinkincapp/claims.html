@@ -15,35 +15,44 @@
                 {% csrf_token %}
                 <div class="form-row">
                     <div class="col-md-6 mb-3">
-                        {{ form.category.label_tag }}
+                        <label for="id_category">Category</label>
                         {{ form.category }}
                     </div>
                     <div class="col-md-6 mb-3">
-                        {{ form.amount.label_tag }}
+                        <label for="id_amount">Amount</label>
                         {{ form.amount }}
                     </div>
                 </div>
                 <div class="form-row">
                     <div class="col-md-6 mb-3">
-                        {{ form.date_from.label_tag }}
+                        <label for="id_date_from">From</label>
                         {{ form.date_from }}
                     </div>
                     <div class="col-md-6 mb-3">
-                        {{ form.date_to.label_tag }}
+                        <label for="id_date_to">To</label>
                         {{ form.date_to }}
                     </div>
                 </div>
                 <div class="form-group">
-                    {{ form.description.label_tag }}
+                    <label for="id_description">Description</label>
                     {{ form.description }}
-                    <!-- Make description larger, CSS can be added to ensure better appearance -->
                 </div>
                 <div class="form-group">
-                    {{ form.claim_file.label_tag }}
+                    <label for="id_claim_file">Attach File</label>
                     {{ form.claim_file }}
                 </div>
                 <button type="submit" class="btn btn-success btn-lg w-100">Submit</button>
             </form>
+            <!-- Debugging: Display form errors -->
+            {% if form.errors %}
+            <div class="alert alert-danger mt-3">
+                <ul>
+                    {% for field, errors in form.errors.items %}
+                    <li><strong>{{ field }}:</strong> {{ errors|join:", " }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
         </div>
     </div>
 
@@ -75,7 +84,6 @@
                     <td>{{ claim.status }}</td>
                     <td>{{ claim.approved_by }}</td>
                     <td>
-                        <!-- Limit text to 2-3 sentences -->
                         <div style="max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                             {{ claim.description }}
                         </div>

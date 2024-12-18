@@ -1,41 +1,66 @@
 {% extends 'base.html' %}
-
+{% block title %}Apply Leave{% endblock %}
 {% block content %}
 <div class="container my-5">
-    <h1 class="text-center display-4 font-weight-bold">Apply for Leave</h1>
+    <h1 class="text-center display-4 font-weight-bold text-primary mb-4">Apply for Leave</h1>
 
     <!-- Leave Summary -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-header bg-primary text-white">
-            <h3 class="mb-0">Available and Applied Leaves</h3>
+    <div class="card shadow-lg mb-4 border-0 rounded-lg">
+        <div class="card-header bg-primary text-white rounded-top">
+            <h3 class="mb-0">Leave Summary</h3>
         </div>
         <div class="card-body">
             <ul class="list-group">
-                <li class="list-group-item">Casual Leave: {{ available_leaves.casual }} days</li>
-                <li class="list-group-item">Leave Without Pay: {{ available_leaves.leave_without_pay }} days</li>
-                <li class="list-group-item">Manager Approval: {{ available_leaves.manager_approval }} days</li>
+                <li class="list-group-item custom-list-group-item">
+                    <strong>Total Casual Leave:</strong> <span class="badge bg-info">{{ total_casual_leave }}</span> 
+                </li>
+                <li class="list-group-item custom-list-group-item">
+                    <strong>AVAILABLE:</strong> <span class="badge bg-success">{{ remaining_casual_leave }}</span> 
+                </li>
+                <li class="list-group-item custom-list-group-item">
+                    <strong>AVAILED:</strong> <span class="badge bg-danger">{{ applied_casual_leave }}</span> 
+                </li>
             </ul>
         </div>
     </div>
 
     <!-- Apply Leave Form -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-header bg-success text-white">
+    <div class="card shadow-lg mb-4 border-0 rounded-lg">
+        <div class="card-header bg-success text-white rounded-top">
             <h3 class="mb-0">Apply for a New Leave</h3>
         </div>
         <div class="card-body">
-            <form method="post">
+            <form method="post" class="needs-validation" novalidate>
                 {% csrf_token %}
-                {{ form.as_p }}
-                <button type="submit" class="btn btn-success btn-lg w-100">Submit Leave Application</button>
+                <div class="mb-4">
+                    <label for="leave_type" class="form-label">Leave Type</label>
+                    {{ form.leave_type }}
+                </div>
+                <div class="mb-4">
+                    <label for="leave_category" class="form-label">Leave Category</label>
+                    {{ form.category }}
+                </div>
+                <div class="mb-4">
+                    <label for="leave_reason" class="form-label">Reason</label>
+                    {{ form.reason }}
+                </div>
+                <div class="mb-4">
+                    <label for="start_date" class="form-label">Start Date</label>
+                    {{ form.start_date }}
+                </div>
+                <div class="mb-4">
+                    <label for="end_date" class="form-label">End Date</label>
+                    {{ form.end_date }}
+                </div>
+                <button type="submit" class="btn btn-success btn-lg w-100 shadow-lg hover-btn">Submit Leave Application</button>
             </form>
         </div>
     </div>
 
     <!-- Applied Leave List -->
-    <h2 class="mt-5 font-weight-bold">Your Applied Leaves</h2>
+    <h2 class="mt-5 font-weight-bold text-dark">Your Applied Leaves</h2>
     <div class="table-responsive">
-        <table class="table table-hover table-bordered">
+        <table class="table table-hover table-bordered custom-table">
             <thead class="thead-dark">
                 <tr>
                     <th scope="col">Leave Type</th>
@@ -44,14 +69,13 @@
                     <th scope="col">End Date</th>
                     <th scope="col">Status</th>
                     <th scope="col">Reason</th>
-                    <th scope="col">Action</th>
                 </tr>
             </thead>
             <tbody>
                 {% for leave in applied_leaves %}
-                    <tr>
+                    <tr class="table-row">
                         <td>{{ leave.leave_type }}</td>
-                        <td>{{ leave.leave_category }}</td>
+                        <td>{{ leave.category }}</td>
                         <td>{{ leave.start_date }}</td>
                         <td>{{ leave.end_date }}</td>
                         <td>
@@ -60,17 +84,97 @@
                             </span>
                         </td>
                         <td>{{ leave.reason }}</td>
-                        <!-- <td>
-                            <a href="{% url 'leave_detail' leave.id %}" class="btn btn-info btn-sm">Details</a>
-                        </td> -->
                     </tr>
                 {% empty %}
                     <tr>
-                        <td colspan="7" class="text-center text-muted">No leave applications found.</td>
+                        <td colspan="6" class="text-center text-muted">No leave applications found.</td>
                     </tr>
                 {% endfor %}
             </tbody>
         </table>
     </div>
+
+    <!-- Manager Information -->
+    {% if manager %}
+        <h3 class="mt-4">Project Manager: <span class="text-info">{{ manager.user.first_name }} {{ manager.user.last_name }}</span></h3>
+        <p>Email: <a href="mailto:{{ manager.user.email }}" class="text-decoration-none text-info">{{ manager.user.email }}</a></p>
+    {% else %}
+        <p class="mt-4 text-muted">No department manager assigned.</p>
+    {% endif %}
 </div>
+
+{% block extra_css %}
+<style>
+    .custom-list-group-item {
+        font-size: 1.1rem;
+        background-color: #f8f9fa;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        transition: background-color 0.3s ease, transform 0.3s ease;
+    }
+    .custom-list-group-item:hover {
+        background-color: #e2e6ea;
+        transform: scale(1.02);
+    }
+    .custom-table th, .custom-table td {
+        padding: 1.2rem;
+        font-size: 1rem;
+        text-align: center;
+    }
+    .custom-table tbody tr:hover {
+        background-color: #f1f1f1;
+        transform: translateY(-2px);
+        transition: transform 0.3s ease;
+    }
+    .shadow-lg {
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+    }
+    .text-primary {
+        color: #007bff !important;
+    }
+    .hover-btn:hover {
+        background-color: #218838;
+        transition: background-color 0.3s ease;
+    }
+    .table-row {
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+    .table-row:hover {
+        background-color: #f7f7f7;
+        transform: scale(1.01);
+    }
+    .badge {
+        font-size: 1.1rem;
+        padding: 0.5rem;
+        font-weight: bold;
+    }
+    .form-control:focus {
+        border-color: #28a745;
+        box-shadow: 0 0 10px rgba(40, 167, 69, 0.5);
+    }
+    .card-header {
+        border-top-left-radius: 0.75rem;
+        border-top-right-radius: 0.75rem;
+    }
+    .card-body {
+        background-color: #ffffff;
+        border-radius: 0.75rem;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Add smooth scroll effect for leave form and tables
+    document.querySelectorAll('.navbar-nav a').forEach(anchor => {
+        anchor.addEventListener('click', function (e) {
+            e.preventDefault();
+            document.querySelector(this.getAttribute('href')).scrollIntoView({
+                behavior: 'smooth'
+            });
+        });
+    });
+</script>
+{% endblock %}
 {% endblock %}

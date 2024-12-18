@@ -6,9 +6,15 @@ from django.dispatch import receiver
 from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import User
 from django.utils import timezone
+from django.utils.timezone import now
 
 
+class Role(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    permissions = models.TextField(blank=True)  # Define permissions as JSON or use Django's permissions framework.
 
+    def __str__(self):
+        return self.name
 
 class Department(models.Model):
     name = models.CharField(max_length=100, unique=True)  
@@ -25,6 +31,7 @@ class Designation(models.Model):
 
 
 class Employee(models.Model):
+    role = models.ForeignKey(Role, on_delete=models.SET_NULL, null=True, blank=True)
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     first_name = models.CharField(max_length=50)
     last_name = models.CharField(max_length=50)
@@ -122,9 +129,8 @@ class LeaveType(models.Model):
 class Leave(models.Model):
     
     employee = models.ForeignKey('Employee', on_delete=models.CASCADE) 
-    leave_type = models.ForeignKey(LeaveType, on_delete=models.SET_NULL, null=True)
+    leave_type = models.CharField(max_length=20, choices=[('first_half', 'First Half'), ('second_half', 'Second Half'),('full_day', 'Full Day')], null=True, blank=True)
     category = models.CharField(max_length=50, choices=[('casual', 'Casual'), ('without_pay', 'Leave Without Pay'), ('manager_approval', 'Manager Approval')],null=True, blank=True)
-    
     start_date = models.DateField()
     end_date = models.DateField()  
     reason = models.TextField()    
@@ -148,7 +154,8 @@ class Leave(models.Model):
             ('present', 'Present'), 
             ('absent', 'Absent'), 
             ('weekend', 'Weekend'), 
-            ('holiday', 'Holiday')
+            ('holiday', 'Holiday'),
+            ('rejected', 'Rejected'),
         ],
         default='present'
     )
@@ -176,12 +183,12 @@ class Claim(models.Model):
         ('other', 'Other'),
     ]
 
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)  
+    employee = models.ForeignKey('Employee', on_delete=models.CASCADE)  
     category = models.CharField(max_length=50, choices=CATEGORY_CHOICES) 
     amount = models.DecimalField(max_digits=10, decimal_places=2) 
     description = models.TextField(blank=True, null=True) 
     claim_file = models.FileField(upload_to='claims/', blank=True, null=True)  
-    status = models.CharField(max_length=20, choices=[('pending', 'Pending'), ('approved', 'Approved'), ('rejected', 'Rejected')], default='pending')
+    status = models.CharField(max_length=20, choices=[('pending', 'Pending'), ('approved', 'Approved'), ('rejected', 'Rejected')],blank=True, null=True)
     approved_by = models.CharField(max_length=100, blank=True, null=True)
     comment = models.TextField(blank=True, null=True)
     last_action = models.DateTimeField(auto_now=True)
@@ -189,7 +196,7 @@ class Claim(models.Model):
     date_to = models.DateField(default=timezone.now)
     
     def __str__(self):
-        return f"{self.employee} - {self.category} - {self.amount}"
+        return f"{self.category} - {self.amount}"
 
 
 class BasicInformation(models.Model):
@@ -294,21 +301,74 @@ class HRPolicy(models.Model):
     def __str__(self):
         return self.policy_type
     
-class TimeSheet(models.Model):
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
-    date = models.DateField()
-    work_hours = models.DecimalField(max_digits=5, decimal_places=2)
-    description = models.TextField()
 
-    def __str__(self):
-        return f"{self.employee} - {self.date}"
-
-class project(models.Model):  
-    name = models.CharField(max_length=100)
+class Project(models.Model):  # Renamed `project` to `Project` to follow conventions
+    project_name = models.CharField(max_length=100)
     description = models.TextField()
+    vendor_name = models.CharField(max_length=255, blank=True, null=True)
+    status = models.CharField(max_length=50, choices=[('active', 'Active'), ('inactive', 'Inactive')])
+    project_type = models.CharField(max_length=50, choices=[('billable', 'Billable'), ('non_billable', 'Non-Billable')], default='Billable' )
     start_date = models.DateField()
     end_date = models.DateField()
-    status = models.CharField(max_length=20)
+    STATUS_CHOICES = [
+        ('active', 'Active'),
+        ('inactive', 'Inactive'),
+        ('completed', 'Completed'),
+        ('On Hold', 'On Hold'),
+    ]
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES)
+
+    def __str__(self):
+        return self.project_name
+
+
+class TimeSheet(models.Model):
+    employee = models.ForeignKey(
+        'Employee',
+        on_delete=models.CASCADE,
+        related_name='timesheets'
+    )
+    
+    # Project field will now be a CharField with choices and option to add custom project name
+    PROJECT_CHOICES = [
+        ('Python_Training_on_bench', 'Python_Training_on_bench'),
+        ('On Bench', 'On Bench'),
+        ('Other', 'Other'),
+    ]
+    
+    project = models.CharField(
+        max_length=100,
+        choices=PROJECT_CHOICES,
+        default='Python_Training_on_bench',
+    )
+    custom_project_name = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True,
+        help_text="Enter custom project name if 'Other' is selected"
+    )
+
+    date = models.DateField()
+    hours = models.PositiveIntegerField(blank=True, null=True)
+    minutes = models.PositiveIntegerField(blank=True, null=True)
+    description = models.TextField()
+
+    STATUS_CHOICES = [
+        ('Pending', 'Pending'),
+        ('Approved', 'Approved'),
+    ]
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default='Pending'
+    )
+    comment = models.TextField(null=True, blank=True)
+    acknowledgment = models.BooleanField(default=False)
+    def __str__(self):
+        # Check if the project is 'Other' and use the custom project name
+        project_name = self.custom_project_name if self.project == 'Other' else self.project
+        employee_name = self.employee.username if hasattr(self.employee, 'username') else "Unknown Employee"
+        return f"{employee_name} - {project_name}"
 
 class Training(models.Model):
     timesheet  = models.OneToOneField(TimeSheet, on_delete=models.CASCADE)
@@ -321,6 +381,11 @@ class Training(models.Model):
 class WorkFromHome(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='wfh_status')
     wfh_date = models.DateField()
+    work_preference = models.CharField(
+        max_length=10, 
+        choices=[('WFH', 'Work From Home'), ('WFO', 'Work From Office')], 
+        default='WFO'
+    )
 
     def __str__(self):
         return f"{self.employee.first_name} {self.employee.last_name} - WFH on {self.wfh_date}"
@@ -336,3 +401,8 @@ class Attendance(models.Model):
     def __str__(self):  
         return f"{self.employee.first_name} {self.employee.last_name} - {self.date}"
 
+
+
+
+    # Other fields...
+    

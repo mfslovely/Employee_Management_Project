@@ -51,6 +51,15 @@
         .login-link a:hover {
             text-decoration: underline;
         }
+        .form-group-container {
+            display: flex; /* This will align the child divs in a row */
+            gap: 10px; /* Add space between the selects */
+        }
+
+        .form-group {
+            flex: 1; /* Makes both form groups take up equal space */
+        }
+        
     </style>
 </head>
 <body>
@@ -103,8 +112,25 @@
                 <label for="password">Password:</label>
                 <input type="password" name="password" class="form-control" required>
             </div>
-
-            <!-- Add other fields as needed -->
+            <div class="form-group-container">
+                <div class="form-group">
+                    <select name="role" required>
+                        <option value="" disabled selected>Select Role</option>
+                        {% for role in roles %}
+                            <option value="{{ role.name }}">{{ role.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <select name="department" required>
+                        <option value="" disabled selected>Select Department</option>
+                        {% for department in departments %}
+                            <option value="{{ department.name }}">{{ department.name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+                      <!-- Add other fields as needed -->
 
             <button type="submit" class="btn btn-primary btn-block">Register</button>
         </form>

@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+{% block title %}Approve Leave{% endblock %}
+
+{% block content %}
+<!-- manage_leave.html -->
+<div class="leave-requests-container">
+    <!-- Search Bar -->
+    <form method="get" class="search-form">
+        <input type="text" name="first_name" placeholder="Search by Employee Name" value="{{ search_query }}" class="search-input">
+        <button type="submit" class="search-btn">Search</button>
+    </form>
+
+    <!-- Pending Leave Requests -->
+    <h2 class="page-title">Pending Leave Requests</h2>
+    {% if leave_requests_pending %}
+        {% for leave in leave_requests_pending %}
+            <div class="leave-request-card">
+                <div class="employee-info">
+                    <p class="employee-name">{{ leave.employee.first_name }} {{ leave.employee.last_name }}</p>
+                    <p class="leave-details">
+                        <strong>{{ leave.leave_type }}</strong> leave from <strong>{{ leave.start_date }}</strong> to <strong>{{ leave.end_date }}</strong>
+                    </p>
+                </div>
+                <div class="leave-reason">
+                    <h3>Reason for Leave:</h3>
+                    <p>{{ leave.reason }}</p>
+                </div>
+                <form method="post" class="leave-action-form">
+                    {% csrf_token %}
+                    <input type="hidden" name="leave_id" value="{{ leave.id }}">
+                    <div class="action-buttons">
+                        <button type="submit" name="action" value="approve" class="approve-btn">Approve</button>
+                        <button type="submit" name="action" value="reject" class="reject-btn">Reject</button>
+                    </div>
+                </form>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No pending leave requests.</p>
+    {% endif %}
+
+    <!-- Approved Leave Requests -->
+    <h2 class="page-title">Approved Leave Requests</h2>
+    {% if leave_requests_approved %}
+        {% for leave in leave_requests_approved %}
+            <div class="leave-request-card">
+                <div class="employee-info">
+                    <p class="employee-name">{{ leave.employee.first_name }} {{ leave.employee.last_name }}</p>
+                    <p class="leave-details">
+                        <strong>{{ leave.leave_type }}</strong> leave from <strong>{{ leave.start_date }}</strong> to <strong>{{ leave.end_date }}</strong>
+                    </p>
+                </div>
+                <div class="leave-reason">
+                    <h3>Reason for Leave:</h3>
+                    <p>{{ leave.reason }}</p>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No approved leave requests.</p>
+    {% endif %}
+
+    <!-- Rejected Leave Requests -->
+    <h2 class="page-title">Rejected Leave Requests</h2>
+    {% if leave_requests_rejected %}
+        {% for leave in leave_requests_rejected %}
+            <div class="leave-request-card">
+                <div class="employee-info">
+                    <p class="employee-name">{{ leave.employee.first_name }} {{ leave.employee.last_name }}</p>
+                    <p class="leave-details">
+                        <strong>{{ leave.leave_type }}</strong> leave from <strong>{{ leave.start_date }}</strong> to <strong>{{ leave.end_date }}</strong>
+                    </p>
+                </div>
+                <div class="leave-reason">
+                    <h3>Reason for Leave:</h3>
+                    <p>{{ leave.reason }}</p>
+                </div>
+            </div>
+        {% endfor %}
+    {% else %}
+        <p>No rejected leave requests.</p>
+    {% endif %}
+</div>
+{% block extra_css %}
+<style>
+    /* Container for all leave requests */
+    .leave-requests-container {
+        max-width: 950px;
+        margin: 110px auto;
+        padding: 30px;
+        background-color: #f4f7fb;
+        border-radius: 10px;
+    }
+
+    /* Title of the page */
+    .page-title {
+        text-align: center;
+        font-size: 2rem;
+        color: #333;
+        margin-bottom: 40px;
+        font-weight: bold;
+    }
+
+    /* Search Form */
+    .search-form {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 20px;
+    }
+
+    .search-input {
+        padding: 10px 15px;
+        font-size: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 5px 0 0 5px;
+        outline: none;
+    }
+
+    .search-btn {
+        padding: 10px 15px;
+        font-size: 1rem;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 0 5px 5px 0;
+        cursor: pointer;
+    }
+
+    .search-btn:hover {
+        background-color: #0056b3;
+    }
+
+    /* Style for individual leave request cards */
+    .leave-request-card {
+        background-color: #ffffff;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        padding: 25px;
+        margin-bottom: 20px;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border-left: 6px solid #007bff;
+    }
+
+    .leave-request-card:hover {
+        transform: scale(1.05);
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Employee information styling */
+    .employee-info {
+        margin-bottom: 15px;
+    }
+
+    .employee-name {
+        font-size: 1.3rem;
+        font-weight: bold;
+        color: #007bff;
+        text-transform: capitalize;
+    }
+
+    .leave-details {
+        font-size: 1rem;
+        color: #555;
+        margin-top: 5px;
+    }
+
+    /* Reason styling */
+    .leave-reason h3 {
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 10px;
+        text-decoration: underline;
+    }
+
+    .leave-reason p {
+        font-size: 1rem;
+        color: #555;
+    }
+
+    /* Styling for the action buttons (Approve, Reject) */
+    .action-buttons {
+        display: flex;
+        gap: 20px;
+        justify-content: flex-start;
+        margin-top: 20px;
+    }
+
+    .approve-btn, .reject-btn {
+        padding: 14px 30px;
+        font-size: 1.1rem;
+        font-weight: bold;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.3s, transform 0.3s ease;
+        width: 130px;
+    }
+
+    .approve-btn {
+        background-color: #28a745;
+        color: white;
+    }
+
+    .approve-btn:hover {
+        background-color: #218838;
+        transform: translateY(-2px);
+    }
+
+    .reject-btn {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    .reject-btn:hover {
+        background-color: #c82333;
+        transform: translateY(-2px);
+    }
+
+    /* Add spacing between cards */
+    .leave-request-card + .leave-request-card {
+        margin-top: 25px;
+    }
+</style>
+{% block extra_js %}
+<script>
+    // Optional: JavaScript for button hover effects
+    document.querySelectorAll('.approve-btn, .reject-btn').forEach(button => {
+        button.addEventListener('mouseover', function() {
+            this.style.transform = 'scale(1.05)';
+        });
+        button.addEventListener('mouseout', function() {
+            this.style.transform = 'scale(1)';
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}
+{% endblock %}

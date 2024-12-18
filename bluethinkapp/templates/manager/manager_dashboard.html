@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container">
+    <h1 class="text-center">Dashboard</h1>
+
+    <!-- Upcoming Birthdays -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4>Upcoming Birthdays</h4>
+                </div>
+                <div class="card-body">
+                    {% if upcoming_birthdays %}
+                        <ul class="list-group">
+                            {% for employee in upcoming_birthdays %}
+                                <li class="list-group-item">
+                                    {{ employee.first_name }} {{ employee.last_name }}
+                                    - Birthday: {{ employee.date_of_birth|date:"F j" }}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">No upcoming birthdays in the next 30 days.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Upcoming Work Anniversaries -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h4>Upcoming Work Anniversaries</h4>
+                </div>
+                <div class="card-body">
+                    {% if upcoming_anniversaries %}
+                        <ul class="list-group">
+                            {% for employee in upcoming_anniversaries %}
+                                <li class="list-group-item">
+                                    {{ employee.first_name }} {{ employee.last_name }} 
+                                    - Work Anniversary: {{ employee.date_of_joining|date:"F j" }}
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">No upcoming work anniversaries in the next 30 days.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Employees on Leave -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h4>Employees on Leave</h4>
+                </div>
+                <div class="card-body">
+                    {% if employee_on_leave %}
+                        <ul class="list-group">
+                            {% for leave in employee_on_leave %}
+                                <li class="list-group-item">
+                                    {{ leave.employee.first_name }} {{ leave.employee.last_name }} 
+                                    - Leave Type: {{ leave.leave_type }} 
+                                    ({{ leave.start_date|date:"F j" }} to {{ leave.end_date|date:"F j" }})
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <p class="text-muted">No employees on leave today.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Employees Working from Home -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h4>Employees Working from Home</h4>
+                </div>
+                <div class="card-body">
+                    {% if employee_working_from_home %}
+                            <ul class="list-group">
+                                {% for wfh in employee_working_from_home %}
+                                    <li class="list-group-item">
+                                        {{ wfh.employee.first_name }} {{ wfh.employee.last_name }} 
+                                        - WFH Date: {{ wfh.wfh_date|date:"F j" }}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p class="text-muted">No employees working from home today.</p>
+                        {% endif %}
+
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

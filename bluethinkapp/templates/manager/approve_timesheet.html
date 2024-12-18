@@ -1,0 +1,238 @@
+{% extends 'base.html' %}
+{% block title %}Approve Timesheets{% endblock %}
+
+{% block content %}
+<!-- Approve Timesheets Page -->
+<div class="timesheet-container">
+    <h2 class="page-title">Approve Employee Timesheets</h2>
+
+    <!-- Filter Form -->
+    <form method="get" action="{% url 'manager_approve_timesheet' %}" class="filter-form">
+        <div class="form-group">
+            <label for="first_name">Developer Name:</label>
+            <input type="text" id="first_name" name="first_name" placeholder="Enter employee name" 
+                value="{{ request.GET.first_name }}">
+        </div>
+        <div class="form-group">
+            <label for="month">Month/Perivous Month:</label>
+            <select id="month" name="month">
+                <option value="">Select Month</option>
+                <option value="current" {% if request.GET.month == 'current' %}selected{% endif %}>Current Month</option>
+                <option value="previous" {% if request.GET.month == 'previous' %}selected{% endif %}>Previous Month</option>
+            </select>
+        </div>
+        <button type="submit" class="filter-btn">Search</button>
+    </form>
+
+    <!-- Timesheet Table -->
+    {% if request.GET.first_name or request.GET.month %}
+        {% if timesheets %}
+        <form method="post" action="{% url 'manager_approve_timesheet' %}" class="bulk-action-form">
+            {% csrf_token %}
+            <div class="timesheet-table-container">
+                <table class="timesheet-table">
+                    <thead>
+                        <tr>
+                            <th><input type="checkbox" id="select-all" onclick="toggleSelectAll(this)"></th>
+                            <th>No</th>
+                            <th>Employee Name</th>
+                            <th>Project</th>
+                            <th>Date</th>
+                            <th>Hours</th>
+                            <th>Description</th>
+                            <th>Status</th>
+                            <th>Comment</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for timesheet in timesheets %}
+                            <tr>
+                                <td>
+                                    <input type="checkbox" name="timesheet_ids" value="{{ timesheet.id }}" checked>
+                                </td>
+                                <td>{{ forloop.counter }}</td>
+                                <td>{{ timesheet.employee.first_name }} {{ timesheet.employee.last_name }}</td>
+                                <td>{{ timesheet.project}}</td>
+                                <td>{{ timesheet.date }}</td>
+                                <td>{{ timesheet.hours }}</td>
+                                <td>{{ timesheet.description }}</td>
+                                <td class="status {{ timesheet.status }}">{{ timesheet.status }}</td>
+                                
+                            <td>
+                                <textarea name="comments_{{ timesheet.id }}" class="comment-box">{{ timesheet.comment }}</textarea>
+                            </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="bulk-actions">
+                <!-- <textarea name="comment" class="comment-box" placeholder="Add a comment (optional)"></textarea> -->
+                <button type="submit" name="action" value="approve" class="bulk-approve-btn">Approve Selected</button>
+                <button type="submit" name="action" value="reject" class="bulk-reject-btn">Reject Selected</button>
+            </div>
+        </form>
+        {% else %}
+            <p class="no-data">No timesheets found for the selected criteria.</p>
+        {% endif %}
+    {% else %}
+        <p class="no-data">Please filter by employee name and/or month to see timesheets.</p>
+    {% endif %}
+</div>
+
+<script>
+    // JavaScript to toggle "select all" functionality
+    function toggleSelectAll(selectAllCheckbox) {
+        const checkboxes = document.querySelectorAll('input[name="timesheet_ids"]');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = selectAllCheckbox.checked;
+        });
+    }
+</script>
+
+{% block extra_css %}
+<style>
+    /* General Container */
+    .timesheet-container {
+        max-width: 1200px;
+        margin: 120px auto;
+        padding: 30px;
+        background-color: #f9f9f9;
+        border-radius: 10px;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    /* Page Title */
+    .page-title {
+        text-align: center;
+        font-size: 2rem;
+        color: #333;
+        margin-bottom: 30px;
+        font-weight: bold;
+    }
+
+    /* Filter Form */
+    .filter-form {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 30px;
+        padding: 10px 20px;
+        background-color: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+
+    .form-group {
+        display: flex;
+        flex-direction: column;
+        gap: 5px;
+    }
+
+    .filter-form label {
+        font-weight: bold;
+        color: #555;
+    }
+
+    .filter-form input,
+    .filter-form select {
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 1rem;
+    }
+
+    .filter-btn {
+        padding: 10px 20px;
+        font-size: 1rem;
+        font-weight: bold;
+        color: white;
+        background-color: #007bff;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    .filter-btn:hover {
+        background-color: #0056b3;
+    }
+
+    /* Timesheet Table */
+    .timesheet-table-container {
+        overflow-x: auto;
+    }
+
+    .timesheet-table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: #fff;
+        border-radius: 10px;
+        overflow: hidden;
+    }
+
+    .timesheet-table th,
+    .timesheet-table td {
+        padding: 15px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+
+    .timesheet-table th {
+        background-color: #007bff;
+        color: white;
+        font-weight: bold;
+    }
+
+    .timesheet-table tr:hover {
+        background-color: #f1f1f1;
+    }
+
+    /* No Data Message */
+    .no-data {
+        text-align: center;
+        font-size: 1.2rem;
+        color: #999;
+    }
+
+    /* Action Buttons */
+    .bulk-actions {
+        text-align: center;
+        margin-top: 20px;
+    }
+
+    .bulk-approve-btn,
+    .bulk-reject-btn {
+        padding: 12px 24px;
+        font-size: 1rem;
+        font-weight: bold;
+        border-radius: 5px;
+        cursor: pointer;
+        margin: 0 10px;
+        transition: background-color 0.3s;
+    }
+
+    .bulk-approve-btn {
+        background-color: #28a745;
+        color: white;
+        border: none;
+    }
+
+    .bulk-reject-btn {
+        background-color: #dc3545;
+        color: white;
+        border: none;
+    }
+
+    .bulk-approve-btn:hover {
+        background-color: #218838;
+    }
+
+    .bulk-reject-btn:hover {
+        background-color: #c82333;
+    }
+    
+</style>
+{% endblock %}
+{% endblock %}

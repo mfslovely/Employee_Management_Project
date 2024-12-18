@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block content %}
+    <div class="container">
+        <h2>Edit Time Sheet</h2>
+        
+        <!-- Display any error or success messages -->
+        {% if messages %}
+            <div class="alert alert-success" role="alert">
+                {% for message in messages %}
+                    <p>{{ message }}</p>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <form method="POST" action = "{% url 'edit_time_sheet id=ts.id ' %}" >
+            {% csrf_token %}
+            <div class="form-group">
+                <label for="editProject">Project Name</label>
+                <input type="text" id="editProject" class="form-control" name="project" value="{{ time_sheet.project }}" required>
+            </div>
+            <div class="form-group">
+                <label for="editDate">Date</label>
+                <input type="date" id="editDate" class="form-control" name="date" value="{{ time_sheet.date }}" required>
+            </div>
+            <div class="form-group">
+                <label for="editHours">Hours</label>
+                <input type="number" id="editHours" class="form-control" name="hours" value="{{ time_sheet.hours }}" min="0" max="24" required>
+            </div>
+            <div class="form-group">
+                <label for="editMinutes">Minutes</label>
+                <input type="number" id="editMinutes" class="form-control" name="minutes" value="{{ time_sheet.minutes }}" min="0" max="59" required>
+            </div>
+            <!-- <div class="form-group">
+                <label for="editDescription">Description</label>
+                <textarea id="editDescription" class="form-control" name="description" rows="3" required>{{ time_sheet.description }}</textarea>
+            </div> -->
+            <div class="form-group">
+                <label for="editStatus">Status</label>
+                <input type="text" id="editStatus" class="form-control" name="status" value="{{ time_sheet.status }}" required>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <!-- <a href="{% url 'add_time_sheet' %}" class="btn btn-secondary">Cancel</a> -->
+        </form>
+    </div>
+{% endblock %}

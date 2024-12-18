@@ -1,5 +1,5 @@
 from django import forms
-from .models import Employee,Claim,Leave
+from .models import Employee,Claim,Leave,TimeSheet,Project,LeaveType
 
 class AccountDetailsForm(forms.ModelForm):
     class Meta:
@@ -64,6 +64,7 @@ class LeaveApplicationForm(forms.ModelForm):
             'end_date': forms.DateInput(attrs={'type': 'date'}),
         }
 
+
 class ApplyLeaveForm(forms.ModelForm):
     class Meta:
         model = Leave
@@ -73,8 +74,33 @@ class ApplyLeaveForm(forms.ModelForm):
             'end_date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'reason': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
+
     
-    def __init__(self, *args, **kwargs):
-        super(ApplyLeaveForm, self).__init__(*args, **kwargs)
-        self.fields['category'].widget.attrs.update({'class': 'form-control'})
-        self.fields['leave_type'].widget.attrs.update({'class': 'form-control'})
+    
+class TimeSheetForm(forms.ModelForm):
+    class Meta:
+        model = TimeSheet
+        fields = ['project', 'date', 'hours', 'minutes', 'description','comment']
+        widgets = {
+            'date': forms.DateInput(attrs={'type': 'date'}),
+            'hours': forms.NumberInput(attrs={'min': 0}),
+            'minutes': forms.NumberInput(attrs={'min': 0, 'max': 59}),
+            'description': forms.Textarea(attrs={'rows': 3}),
+            'comment': forms.Textarea(attrs={'placeholder': 'Add comments here (optional)', 'rows': 3}),
+        }
+
+        def save(self, commit=True, user=None):
+            instance = super().save(commit=False)
+            if user:
+                instance.employee = Employee.objects.get(user=user)  # Force correct employee
+            if commit:
+                instance.save()
+            return instance
+
+class ProjectForm(forms.ModelForm):
+    class Meta:
+        model = Project
+        fields = ['project_name', 'start_date', 'end_date','status','project_type','vendor_name']  # Include start_date in the form fields
+        widgets = {
+            'start_date': forms.DateInput(attrs={'type': 'date'})  # Use a date picker for the start date
+        }

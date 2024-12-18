@@ -49,6 +49,8 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'bluethinkapp',
     'crispy_forms',
+    'django_celery_results',
+    'django_celery_beat',
 ]
 
 MIDDLEWARE = [
@@ -63,11 +65,13 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'bluethinkinc.urls'
-
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'templates')],
+        'DIRS': [
+            os.path.join(BASE_DIR, 'templates'),  # Global templates directory
+            os.path.join(BASE_DIR, 'bluethinkapp/templates'),  # App-specific templates
+        ],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -79,6 +83,7 @@ TEMPLATES = [
         },
     },
 ]
+
 
 WSGI_APPLICATION = 'bluethinkinc.wsgi.application'
 
@@ -140,3 +145,27 @@ SESSION_COOKIE_AGE = 1209600  # Two weeks, in seconds
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # Keep the session active after closing the browser
 
 CRISPY_TEMPLATE_PACK = 'bootstrap4'  # or 'bootstrap5' if using Bootstrap 5
+CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Use Redis as the message broker
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'  # Store task results in Redis
+
+
+
+
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'lovelygupta016@gmail.com'
+EMAIL_HOST_PASSWORD = 'dvuc xicq gxtg kuql'
+DEFAULT_FROM_EMAIL = 'lovelygupta016@gmail.com' 
+CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Use Redis as the message broker
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'  # Store task results in Redis
+
+
+MEDIA_URL = '/media/'  # URL to access media files in development
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')  # Directory to store uploaded files

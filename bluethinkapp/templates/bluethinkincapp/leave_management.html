@@ -1,66 +1,207 @@
 {% extends 'base.html' %}
 {% block title %}Leave Management{% endblock %}
 {% block content %}
-    <div class="container">
-        <h1 class="text-center display-4 font-weight-bold">Leave Calendar</h1>
+    <div class="container py-5">
+        <h1 class="text-center display-4 font-weight-bold mb-5">Leave Calendar</h1>
 
         <!-- Apply Leave Button -->
-        <div class="mb-4 text-center">
-            <a href="{% url 'apply_leave' %}" class="btn btn-success btn-lg">Apply for Leave</a>
+        <div class="text-center mb-4">
+            <a href="{% url 'apply_leave' %}" class="btn btn-primary btn-lg">Apply for Leave</a>
+        </div>
+
+        <!-- Legend for Leave Status -->
+        <div class="mb-4">
+            <h5 class="font-weight-bold">Leave Status Legend:</h5>
+            <ul class="list-inline">
+                <li class="list-inline-item"><span class="badge bg-success">Present</span> Present</li>
+                <li class="list-inline-item"><span class="badge bg-danger">Absent</span> Absent</li>
+                <li class="list-inline-item"><span class="badge bg-info">Leave</span> Leave</li>
+                <li class="list-inline-item"><span class="badge bg-secondary">Holiday</span> Holiday</li>
+                <li class="list-inline-item"><span class="badge bg-light text-dark">Weekend</span> Weekend</li>
+                <li class="list-inline-item"><span class="badge bg-dark text-white">Rejected</span> Rejected</li>
+
+            </ul>
+        </div>
+
+        <!-- Calendar Navigation -->
+        <div class="text-center mb-4">
+            <button class="btn btn-secondary" id="prev-month">Previous Month</button>
+            <span id="month-display" class="mx-3"></span>
+            <button class="btn btn-secondary" id="next-month">Next Month</button>
         </div>
 
         <!-- Calendar -->
-        <div id="calendar" class="mt-4"></div>
-
-        <!-- Example Calendar with Bootstrap -->
-        <div class="mt-5">
-            <h3>Leave Status Legend:</h3>
-            <ul>
-                <li><span class="badge bg-success">Present</span></li>
-                <li><span class="badge bg-danger">Absent</span></li>
-                <li><span class="badge bg-primary">Holiday</span></li>
-                <li><span class="badge bg-warning">Weekend</span></li>
-                <li><span class="badge bg-info">Leave</span></li>
-            </ul>
-        </div>
+        <div id="calendar-container" class="calendar-container rounded-lg overflow-hidden shadow-lg"></div>
     </div>
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            const calendar = document.getElementById('calendar');
-            const currentMonth = new Date().getMonth(); // Get current month
+            const currentDate = new Date();
+            let currentMonth = currentDate.getMonth();
+            let currentYear = currentDate.getFullYear();
 
-            const daysInMonth = new Date(new Date().getFullYear(), currentMonth + 1, 0).getDate();
-            const startDay = new Date(new Date().getFullYear(), currentMonth, 1).getDay();
+            // Check if user is logged in
+            const userLoggedIn = true; // You can set this dynamically from your session or state
 
-            // Dynamically create the calendar
-            let calendarHTML = "<div class='row'>";
-            for (let i = 0; i < startDay; i++) {
-                calendarHTML += "<div class='col-1'></div>"; // Empty space for the first day of the month
+            // Fetch data based on the current month and year
+            function getCalendarData() {
+                const url = "/leave-list?year=" + currentYear + "&month=" + (currentMonth + 1);
+                fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    const leaveStatusData = data.calendar_data;
+
+                    // Set the month display
+                    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                    const monthDisplay = document.getElementById('month-display');
+                    monthDisplay.innerHTML = `${monthNames[currentMonth]} ${currentYear}`;
+
+                    // Render the current month
+                    const calendarContainer = document.getElementById('calendar-container');
+                    calendarContainer.innerHTML = renderMonth(currentMonth, leaveStatusData);
+                })
+                .catch(error => {
+                    console.error("Error fetching calendar data:", error);
+                });
             }
 
-            for (let i = 1; i <= daysInMonth; i++) {
-                let leaveStatus = 'present'; // Default to present
+            // Function to render a single month
+            function renderMonth(month, leaveStatusData) {
+                const statusColors = {
+                    present: 'bg-success text-white',
+                    absent: 'bg-danger text-white',
+                    leave: 'bg-info text-dark',
+                    holiday: 'bg-secondary text-white',
+                    weekend: 'bg-light text-dark',
+                    rejected: 'bg-dark text-white', // Standardized weekend color
+                };
 
-                // Check leave status for each day (you will need to fetch this data from the backend)
-                // Example:
-                if (i === 5) leaveStatus = 'absent'; // Just an example
-                if (i === 10) leaveStatus = 'holiday'; // Just an example
+                const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+                const daysInMonth = new Date(currentYear, month + 1, 0).getDate();
+                const startDay = new Date(currentYear, month, 1).getDay();
 
-                calendarHTML += `
-                    <div class="col-1 text-center ${leaveStatus}">
-                        <div class="calendar-day">${i}</div>
-                    </div>
-                `;
+                let monthHTML = `<div class="month-container mb-4">
+                                    <h3 class="text-center font-weight-bold">${monthNames[month]}</h3>
+                                    <div class="row g-0">`;
 
-                // Start a new row after 7 days (for the next week)
-                if (i % 7 === 0) {
-                    calendarHTML += "</div><div class='row'>";
+                // Add the day names (Sun, Mon, Tue, etc.)
+                const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+                dayNames.forEach(day => {
+                    monthHTML += `<div class="col text-center font-weight-bold text-white p-2 bg-dark">${day}</div>`;
+                });
+                monthHTML += "</div><div class='row g-0'>";
+
+                // Add empty cells for the first week
+                for (let i = 0; i < startDay; i++) {
+                    monthHTML += "<div class='col'></div>";
                 }
+
+                // Add days with statuses
+                for (let day = 1; day <= daysInMonth; day++) {
+                    let status = 'absent'; // Default status is absent
+
+                    // If it's a future date, show just the date (no status)
+                    if (new Date(currentYear, month, day) > currentDate) {
+                        status = 'future';
+                    } else {
+                        // Check if there's any status for this day in the fetched leave data
+                        if (leaveStatusData[day]) {
+                            status = leaveStatusData[day];
+                        }
+                    }
+
+                    const statusClass = status === 'future' ? '' : statusColors[status];
+
+                    // Check if the day is a weekend
+                    const isWeekend = (new Date(currentYear, month, day).getDay() === 0 || new Date(currentYear, month, day).getDay() === 6);
+                    const weekendClass = isWeekend ? 'bg-pastel-green text-dark' : '';
+
+                    monthHTML += `
+                        <div class="col text-center ${statusClass} ${weekendClass} p-3" style="height: 100px; border-radius: 8px;">
+                            <div class="day-number h4 font-weight-bold" style="font-size: 1.2em;">${day}</div>
+                            ${status !== 'future' ? `<div class="status-label small" style="font-size: 0.8em;">${status.charAt(0).toUpperCase() + status.slice(1)}</div>` : ''}
+                        </div>
+                    `;
+
+                    // Start a new row after every 7 days
+                    if ((startDay + day) % 7 === 0) {
+                        monthHTML += "</div><div class='row g-0'>";
+                    }
+                }
+
+                monthHTML += "</div></div>";
+                return monthHTML;
             }
 
-            calendarHTML += "</div>";
-            calendar.innerHTML = calendarHTML;
+            // Initial render of the calendar
+            getCalendarData();
+
+            // Event listeners for navigation buttons
+            document.getElementById('prev-month').addEventListener('click', function() {
+                currentMonth--;
+                if (currentMonth < 0) {
+                    currentMonth = 11;
+                    currentYear--;
+                }
+                getCalendarData();
+            });
+
+            document.getElementById('next-month').addEventListener('click', function() {
+                currentMonth++;
+                if (currentMonth > 11) {
+                    currentMonth = 0;
+                    currentYear++;
+                }
+                getCalendarData();
+            });
         });
     </script>
+
+    <style>
+        /* Weekend color updated to a beautiful pastel green */
+        .bg-pastel-green {
+            background-color: #d1f7d1;  /* Light pastel green for weekends */
+        }
+
+        .calendar-container {
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .calendar-body .row > div {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .calendar-body .row > div {
+        min-width: 80px;
+        height: 100px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        border: 1px solid #ddd;  /* Light grey border around each date */
+        border-radius: 8px;  /* Rounded corners */
+        margin: 2px;  /* Margin between dates */
+    }
+
+        .calendar-body .row > div:nth-child(7n), .calendar-body .row > div:nth-child(7n+1) {
+            font-weight: bold;
+        }
+        .bg-secondary {
+            background-color: #d3c71d !important;
+        }
+        .bg-light{
+            background-color: gray !important;
+        }
+        .bg-pastel-green {
+            background-color: gray !important;
+        }
+    </style>
 {% endblock %}

@@ -3,82 +3,183 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Deshboard{% endblock %}</title>
+    <title>{% block title %}Dashboard{% endblock %}</title>
     <!-- Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <!-- Custom CSS -->
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background-color: #f7f9fc;
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #dee2e6; /* Light gray */
         }
+        .navbar-dark .navbar-nav .active>.nav-link, .navbar-dark .navbar-nav .nav-link.active, .navbar-dark .navbar-nav .nav-link.show, .navbar-dark .navbar-nav .show>.nav-link {
+                color: #007bff;
+            }
+            .navbar-dark .navbar-nav .nav-link {
+                color: #007bff;
+            }
+
+        /* Navbar Styling */
         .navbar {
-            background-color: #007bff;
+            background-color: #e9ecef; /* Blue background for navbar */
+            padding: 15px 25px;
+            position: fixed;
+            width: 100%;
+            top: 0;
+            z-index: 1000;
         }
         .navbar-brand {
-            color: white;
+            color: rgb(208, 14, 14); /* White color for brand name */
+            font-weight: bold;
+            font-size: 1.8rem; /* Make it bigger */
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: transform 0.3s ease; /* Hover effect */
         }
+        .navbar-brand:hover {
+            transform: translateY(-3px); /* Slightly raised on hover */
+        }
+        .navbar-nav .nav-link {
+            color: white;
+            padding: 10px 20px;
+            font-size: 1.1rem;
+        }
+        .navbar-nav .nav-link:hover {
+            color: #f1f1f1; /* Light hover effect */
+        }
+
+        .navbar-dark .navbar-brand {
+            color: #3811e8;
+        }
+
+        /* Sidebar Styling */
         .sidebar {
-            background-color: #343a40;
-            color: white;
-            padding: 15px;
             height: 100vh;
+            width: 250px;
+            background-color: #ffffff; /* White background */
+            color: #1E2A3A; /* Dark Blue text */
             position: fixed;
-            width: 220px;
-        }
-        .sidebar a {
-            color: white;
-            text-decoration: none;
-            display: block;
-            padding: 10px;
-            margin: 5px 0;
-        }
-        .sidebar a:hover {
-            background-color: #007bff;
+            left: 0;
+            top: 63px; /* Adjusted to not overlap navbar */
+            box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+            padding-top: 30px;
+            transition: width 0.3s ease;
         }
         .sidebar .profile-section {
             text-align: center;
+            padding: 20px;
             margin-bottom: 20px;
         }
         .sidebar .profile-section img {
-            border-radius: 50%; /* Makes the profile image circular */
-            width: 100px; /* Adjust width */
-            height: 100px; /* Adjust height */
-            object-fit: cover; /* Ensures the image fills the circle without distortion */
+            border-radius: 50%;
+            width: 100px;
+            height: 100px;
+            object-fit: cover;
             margin-bottom: 10px;
         }
         .sidebar .profile-section h4 {
-            margin: 0;
             font-size: 1.2rem;
-            color: #f1f1f1;
         }
-        .sidebar .profile-section p {
-            margin-top: 5px;
-            font-size: 0.9rem;
-            color: #cccccc;
+        .sidebar a {
+            display: flex;
+            align-items: center;
+            color: #1E2A3A;
+            padding: 12px;
+            margin: 10px 0;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 1.1rem;
+            transition: background-color 0.3s, color 0.3s;
         }
-        hr {
-            border: 1px solid #007bff;
+        .sidebar a i {
+            margin-right: 10px;
+        }
+        .sidebar a:hover {
+            background-color: #3498db;
+            color: white;
+        }
+        .sidebar a.active {
+            background-color: #3498db;
+            color: white;
+        }
+        .sidebar hr {
+            border: 1px solid #3498db;
             margin: 15px 0;
         }
+
+        /* Main Content Styling */
         .content {
-            margin-left: 240px;
+            margin-left: 250px;
             padding: 20px;
+            transition: margin-left 0.3s ease;
         }
+
+        /* Footer Styling */
         footer {
-            background-color: #343a40;
-            color: white;
-            padding: 10px 0;
+            background-color: #ffffff; /* White footer */
+            color: #1E2A3A; /* Dark Blue text */
             text-align: center;
-            margin-top: 30px;
+            padding: 10px 0;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
         }
-       
+
+        /* Responsive design */
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 200px;
+            }
+            .content {
+                margin-left: 200px;
+            }
+        }
+        .profile-photo-container {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    margin: 0 auto;
+}
+
+.profile-photo-container img,
+.profile-photo-container .profile-placeholder {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    background-color: #f0f0f0; /* Light gray background for placeholder */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.profile-photo-container .profile-placeholder {
+    color: #0056b3;
+    font-size: 80px;
+}
+
+.profile-section h4 {
+    font-size: 20px;
+    font-weight: bold;
+    margin-top: 15px;
+}
+
+.profile-section p {
+    font-size: 14px;
+    color: #666;
+}
+
+
+  
+
     </style>
 </head>
 <body>
     <!-- Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-light">
+    <nav class="navbar navbar-expand-lg navbar-dark">
         <a class="navbar-brand" href="#">Bluethinkinc</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -86,19 +187,19 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav ml-auto">
                 <li class="nav-item active">
-                    <a class="nav-link text-white" href="{% url 'dashboard' %}">Dashboard</a>
+                    <a class="nav-link" href="{% url 'dashboard' %}">Dashboard</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link text-white" href="{% url 'employee_profile' %}">Profile</a>
+                    <a class="nav-link" href="{% url 'employee_profile' %}">Profile</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link text-white" href="#">Leave</a>
+                    <a class="nav-link" href="#">Leave</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link text-white" href="#">Claims</a>
+                    <a class="nav-link" href="#">Claims</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link text-white" href="#">Logout</a>
+                    <a class="nav-link" href="#">Logout</a>
                 </li>
             </ul>
         </div>
@@ -106,36 +207,56 @@
 
     <!-- Sidebar -->
     <div class="sidebar">
-        <div class="profile-section text-center"> <!-- Added text-center for centering text -->
-            <div class="position-relative d-flex justify-content-center align-items-center" style="height: 120px;"> <!-- Flexbox for centering -->
+        <div class="profile-section">
+            <div class="profile-photo-container">
                 {% if request.user.employee.profile_photo %}
-                    <img src="{{ request.user.employee.profile_photo.url }}" alt="Profile Picture" class="img-fluid rounded-circle" id="profileImage" style="width: 100px; height: 100px;">
+                    <img src="{{ request.user.employee.profile_photo.url }}" alt="Profile Picture">
                 {% else %}
-                    <!-- Font Awesome Default Profile Icon -->
-                    <div class="rounded-circle d-flex justify-content-center align-items-center" style="width: 100px; height: 100px; background-color: #e0e0e0;">
-                        <i class="fas fa-user fa-3x" style="color: #757575;"></i>
+                    <div class="profile-placeholder">
+                        <i class="fas fa-user-tie"></i>
                     </div>
                 {% endif %}
-                <form method="post" enctype="multipart/form-data" style="display: inline;">
-                    {% csrf_token %}
-                    <input type="file" name="profile_photo" accept="image/*" id="uploadInput" style="display: none;" onchange="this.form.submit();">
-                    <label for="uploadInput" class="btn btn-secondary btn-sm position-absolute" style="top: 70%; left: 50%; transform: translate(-50%, -50%); cursor: pointer;">Upload</label>
-                </form>
             </div>
             <h4>{{ request.user.employee.first_name }} {{ request.user.employee.last_name }}</h4>
             <p>{{ request.user.employee.job_title }}</p>
         </div>
-        <hr> <!-- Horizontal line separating profile and menu -->
-        <a href="{% url 'dashboard' %}">Dashboard</a>
-        <a href="{% url 'employee_profile' %}">My Profile</a>
-        <a href="{% url 'leave_list' %}">Leave</a>
-        <a href="#">Time sheet</a>
-        <a href="{% url 'claims' %}">Claims</a>
-        <a href="#">Policy</a>
-        <a href="#">Salary Slip</a>
-        <a href="{% url 'logout_for_the_day' %}">Logout for the day</a>
+        <hr>
+        
+        <!-- Role-based Links with Icons -->
+        {% if request.user.employee.role.name == "Employee" %}
+            <a href="{% url 'dashboard' %}" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="{% url 'employee_profile' %}"><i class="fas fa-user"></i> My Profile</a>
+            <a href="{% url 'leave_list' %}"><i class="fas fa-calendar-day"></i> Leave</a>
+            <a href="{% url 'add_time_sheet' %}"><i class="fas fa-clock"></i> Time Sheet</a>
+            <a href="{% url 'claims' %}"><i class="fas fa-file-invoice"></i> Claims</a>
+    
+        {% elif request.user.employee.role.name == "Manager" %}
+            <a href="{% url 'manager_dashboard' %}" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+            <a href="{% url 'employee_profile' %}"><i class="fas fa-user"></i> My Profile</a>
+            <a href="{% url 'add_project' %}"><i class="fas fa-project-diagram"></i> Add Project</a>
+            <a href="{% url 'leave_list' %}"><i class="fas fa-calendar-day"></i> Leave</a>
+            <a href="{% url 'add_time_sheet' %}"><i class="fas fa-clock"></i> Time Sheet</a>
+            <a href="{% url 'claims' %}"><i class="fas fa-file-invoice"></i> Claims</a>
+            <a href="#"><i class="fas fa-users"></i> Manage Team Leads</a>
+            <a href="{% url 'approve_leave' %}"><i class="fas fa-check-circle"></i> Approve Leaves</a>
+            <a href="#"><i class="fas fa-tasks"></i> Assign Tasks</a>
+            <a href="{% url 'manager_approve_timesheet' %}"><i class="fas fa-check-circle"></i> Approve TimeSheet</a>
+    
+        {% elif request.user.employee.role.name == "Director" %}
+            <a href="#"><i class="fas fa-building"></i> Company Overview</a>
+            <a href="#"><i class="fas fa-chart-line"></i> Strategic Planning</a>
+    
+        {% elif request.user.employee.role.name == "HR" %}
+            <a href="#"><i class="fas fa-users"></i> Employee List</a>
+            <a href="#"><i class="fas fa-chalkboard-teacher"></i> Recruitment Dashboard</a>
+        {% endif %}
+        
+        <hr>
+        <a href="#"><i class="fas fa-clipboard-list"></i> Policy</a>
+        <a href="#"><i class="fas fa-wallet"></i> Salary Slip</a>
+        <a href="{% url 'logout_for_the_day' %}"><i class="fas fa-sign-out-alt"></i> Logout for the day</a>
     </div>
-
+    
     <!-- Main Content -->
     <div class="content">
         <div class="container">
