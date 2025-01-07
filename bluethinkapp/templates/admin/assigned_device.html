@@ -1,0 +1,239 @@
+{% extends 'base.html' %}
+{% block title %}Assign Device{% endblock %}
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assign Device</title>
+
+    <!-- CSS Styles -->
+    <style>
+        /* General Styles */
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Main container */
+        .container {
+            width: 80%;
+            margin: 50px auto;
+            background-color: #ffffff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Heading Styles */
+        h1, h2 {
+            color: #333;
+            text-align: center;
+        }
+
+        /* Form Styling */
+        form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        label {
+            font-size: 14px;
+            font-weight: bold;
+            color: #555;
+        }
+
+        input, select, button {
+            padding: 10px;
+            font-size: 14px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        input[type="date"] {
+            width: 200px;
+        }
+
+        select {
+            width: 250px;
+        }
+
+        /* Button Styles */
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        /* Message Styles */
+        ul.messages {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            list-style-type: none;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        /* Table Styling */
+        table {
+            width: 100%;
+            margin-top: 30px;
+            border-collapse: collapse;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        tr:hover {
+            background-color: #f5f5f5;
+        }
+
+        /* Responsive Table */
+        @media (max-width: 768px) {
+            table {
+                width: 100%;
+                overflow-x: auto;
+                display: block;
+            }
+
+            th, td {
+                font-size: 12px;
+                padding: 8px;
+            }
+
+            label, input, select {
+                width: 100%;
+            }
+        }
+    </style>
+
+</head>
+<body>
+
+    <div class="container">
+        <h1>Assign Device</h1>
+
+        <!-- Assign Device Form -->
+        
+        <form method="POST">
+            {% csrf_token %}
+            
+            <label for="asset_name">Asset Name:</label>
+            <input type="text" name="asset_name" id="asset_name" required>
+
+            <label for="model_number">Model Number:</label>
+            <input type="text" name="model_number" id="model_number" required>
+
+            <label for="serial_number">Serial Number:</label>
+            <input type="text" name="serial_number" id="serial_number" required>
+
+            <label for="processor">Processor:</label>
+            <input type="text" name="processor" id="processor">
+
+            <label for="storage">Storage:</label>
+            <input type="text" name="storage" id="storage">
+
+            <label for="ram">RAM:</label>
+            <input type="text" name="ram" id="ram">
+
+            <label for="employee">Assign to Employee:</label>
+            <select name="employee_id" id="employee">
+                {% for employee in employees %}
+                <option value="{{ employee.id }}">{{ employee.first_name }} {{ employee.last_name }}</option>
+                {% endfor %}
+            </select>
+
+            <label for="assigned_date">Assign Date:</label>
+            <input type="date" name="assigned_date" id="assigned_date" required>
+
+            <label for="category">Category:</label>
+            <select name="category" id="category">
+                <option value="PC">PC</option>
+                <option value="Laptop">Laptop</option>
+                <option value="Keyboard">Keyboard</option>
+                <option value="Mouse">Mouse</option>
+                <option value="Camera">Camera</option>
+                <option value="Phone">Phone</option>
+            </select>
+
+            <button type="submit">Assign</button>
+        </form>
+
+        <!-- Display Success or Error Messages -->
+        {% if messages %}
+            <ul class="messages">
+                {% for message in messages %}
+                    <li class="{{ message.tags }}">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+
+        <!-- Assigned Devices Table -->
+        <h2>Assigned Devices</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Asset Name</th>
+                    <th>Model Number</th>
+                    <th>Serial Number</th>
+                    <th>Processor</th>
+                    <th>Storage</th>
+                    <th>RAM</th>
+                    <th>Owned By</th>
+                    <th>Assigned Date</th>
+                    <th>Category</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for assigned_device in assigned_devices %}
+                <tr>
+                    <td>{{ assigned_device.asset.asset_name }}</td>
+                    <td>{{ assigned_device.asset.model_number }}</td>
+                    <td>{{ assigned_device.asset.serial_number }}</td>
+                    <td>{{ assigned_device.asset.processor }}</td>
+                    <td>{{ assigned_device.asset.storage }}</td>
+                    <td>{{ assigned_device.asset.ram }}</td>
+                    <td>{{ assigned_device.employee.first_name }} {{ assigned_device.employee.last_name }}</td>
+                    <td>{{ assigned_device.assigned_date }}</td>
+                    <td>{{ assigned_device.category }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- JavaScript (Validation and Interactivity) -->
+    <script>
+        // Example of simple form validation
+        document.querySelector('form').addEventListener('submit', function(event) {
+            let assetName = document.getElementById('asset_name').value;
+            if (assetName.trim() === '') {
+                alert('Asset Name is required!');
+                event.preventDefault();
+            }
+        });
+    </script>
+
+</body>
+</html>
+{% endblock %}

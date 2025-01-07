@@ -40,3 +40,6 @@ def check_login_and_notify(user_id):
             )
     except Employee.DoesNotExist:
         print(f"Employee with user ID {user_id} does not exist.")
+
+
+

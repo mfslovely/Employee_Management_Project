@@ -302,7 +302,8 @@ class HRPolicy(models.Model):
         return self.policy_type
     
 
-class Project(models.Model):  # Renamed `project` to `Project` to follow conventions
+class Project(models.Model):
+    employee = models.ForeignKey(Employee,null=True, on_delete=models.CASCADE)  # Renamed `project` to `Project` to follow conventions
     project_name = models.CharField(max_length=100)
     description = models.TextField()
     vendor_name = models.CharField(max_length=255, blank=True, null=True)
@@ -323,29 +324,35 @@ class Project(models.Model):  # Renamed `project` to `Project` to follow convent
 
 
 class TimeSheet(models.Model):
-    employee = models.ForeignKey(
-        'Employee',
-        on_delete=models.CASCADE,
-        related_name='timesheets'
-    )
-    
-    # Project field will now be a CharField with choices and option to add custom project name
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
+
     PROJECT_CHOICES = [
         ('Python_Training_on_bench', 'Python_Training_on_bench'),
         ('On Bench', 'On Bench'),
-        ('Other', 'Other'),
+        ('Other', 'Other'),  # Option for custom project
     ]
-    
+
     project = models.CharField(
         max_length=100,
         choices=PROJECT_CHOICES,
         default='Python_Training_on_bench',
     )
+    
+    # Custom project name for 'Other' project
     custom_project_name = models.CharField(
         max_length=100,
         blank=True,
         null=True,
         help_text="Enter custom project name if 'Other' is selected"
+    )
+
+    # Linking Timesheet to Projects if 'Other' is selected and a custom name is provided.
+    assigned_project = models.ForeignKey(
+        'Project', 
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+        help_text="Select a project from the available list"
     )
 
     date = models.DateField()
@@ -362,13 +369,16 @@ class TimeSheet(models.Model):
         choices=STATUS_CHOICES,
         default='Pending'
     )
+    
     comment = models.TextField(null=True, blank=True)
     acknowledgment = models.BooleanField(default=False)
+
     def __str__(self):
-        # Check if the project is 'Other' and use the custom project name
+        # Return custom project name if project is 'Other', otherwise return the default project
         project_name = self.custom_project_name if self.project == 'Other' else self.project
-        employee_name = self.employee.username if hasattr(self.employee, 'username') else "Unknown Employee"
+        employee_name = self.employee.user.username if hasattr(self.employee, 'user') else "Unknown Employee"
         return f"{employee_name} - {project_name}"
+
 
 class Training(models.Model):
     timesheet  = models.OneToOneField(TimeSheet, on_delete=models.CASCADE)
@@ -401,8 +411,45 @@ class Attendance(models.Model):
     def __str__(self):  
         return f"{self.employee.first_name} {self.employee.last_name} - {self.date}"
 
-
-
-
-    # Other fields...
+class Asset(models.Model):
+    CATEGORY_CHOICES = [
+        ('PC', 'PC'),
+        ('Laptop', 'Laptop'),
+        ('Keyboard', 'Keyboard'),
+        ('Mouse', 'Mouse'),
+        ('Camera', 'Camera'),
+        ('Phone', 'Phone'),
+    ]
     
+    asset_name = models.CharField(max_length=100)
+    model_number = models.CharField(max_length=100)
+    serial_number = models.CharField(max_length=100)
+    processor = models.CharField(max_length=100, null=True, blank=True)
+    storage = models.CharField(max_length=50, null=True, blank=True)
+    ram = models.CharField(max_length=50, null=True, blank=True)
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES)
+    owned_by = models.ForeignKey(Employee, on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_assets')
+    assigned_date = models.DateField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.asset_name} - {self.category}"
+
+
+
+class AssignedDevice(models.Model):
+    asset = models.ForeignKey(Asset, on_delete=models.CASCADE)
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
+    assigned_date = models.DateField()
+    category = models.CharField(max_length=100, choices=[('PC', 'PC'), ('Laptop', 'Laptop'), ('Keyboard', 'Keyboard'), ('Mouse', 'Mouse'), ('Camera', 'Camera'), ('Phone', 'Phone')], default='PC')
+    
+    def __str__(self):
+        return f"{self.asset.asset_name} assigned to {self.employee.first_name}"
+
+
+class ProjectAssignment(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='assignments')
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)  # Use your Employee model if different
+    assigned_date = models.DateField(default=now)
+
+    def __str__(self):
+        return f"{self.employee.username} - {self.project.project_name}"

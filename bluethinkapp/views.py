@@ -1,13 +1,15 @@
 from django.shortcuts import render,redirect
+import json
 from django.utils.timezone import now
 from django.db.models import Sum
 from django.db.models import Sum, F, ExpressionWrapper, IntegerField
 from django.contrib.auth.models import User
 from django.conf import settings
 from django.utils import timezone
+from django.template.loader import render_to_string
 from django.db.models import Q
 from datetime import timedelta
-from .models import Employee,WorkFromHome,Leave,BasicInformation,LoginLogoutHistory, Claim,TimeSheet,Role,Department,Project
+from .models import Employee,WorkFromHome,Leave,BasicInformation,LoginLogoutHistory, Claim,TimeSheet,Role,Department,Project,Holiday,Asset,AssignedDevice,ProjectAssignment
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.hashers import check_password,make_password
@@ -20,7 +22,7 @@ from .forms import (
     EducationDetailsForm,
     CommunicationDetailsForm,
     DocumentSectionForm,
-    PreviousEmploymentDetailsForm,ClaimForm,ApplyLeaveForm,TimeSheetForm,ProjectForm
+    PreviousEmploymentDetailsForm,ClaimForm,ApplyLeaveForm,TimeSheetForm,ProjectForm,HolidayForm,ProjectAssignmentForm
 )
 from django.views import View
 from .tasks import check_login_and_notify 
@@ -34,7 +36,6 @@ from django.core.mail import send_mail
 from .forms import ApplyLeaveForm
 from .models import Leave, Employee, Department
 from django.utils import timezone
-
 from django.shortcuts import render, redirect
 from django.views import View
 from django.contrib.auth.decorators import login_required
@@ -70,12 +71,15 @@ def dashboard(request):
 
     employees_working_from_home = WorkFromHome.objects.all()
     
-
+    assigned_assets = Asset.objects.filter(owned_by__isnull=False)
+    assigned_devices = AssignedDevice.objects.select_related('asset', 'employee').all()
     context = {
         'upcoming_birthdays': upcoming_birthdays,
         'upcoming_anniversaries': upcoming_anniversaries,
         'employee_on_leave': employees_on_leave,
         'employee_working_from_home': employees_working_from_home,
+        'assigned_assets' : assigned_assets,
+        'assigned_device' : assigned_devices
     }
     return render(request, 'bluethinkincapp/deshboard.html', context)
 
@@ -88,35 +92,68 @@ def manager_dashboard(request):
         date_of_birth__day__gte=today.day, 
         date_of_birth__day__lte=next_month.day
     )
-
     upcoming_anniversaries = BasicInformation.objects.filter(
         date_of_joining__month=today.month, 
         date_of_joining__day__gte=today.day, 
         date_of_joining__day__lte=next_month.day
     )
-
     employees_on_leave = Leave.objects.filter(
         start_date__lte=today, 
         end_date__gte=today
     )
 
     employees_working_from_home = WorkFromHome.objects.all()
+    assigned_assets = Asset.objects.filter(owned_by__isnull=False)
     
 
+    # Get the assigned devices for the manager's dashboard
+    assigned_devices = AssignedDevice.objects.select_related('asset', 'employee').all()
     context = {
         'upcoming_birthdays': upcoming_birthdays,
         'upcoming_anniversaries': upcoming_anniversaries,
         'employee_on_leave': employees_on_leave,
         'employee_working_from_home': employees_working_from_home,
+        'assigned_assets': assigned_assets,
+        'assigned_devices': assigned_devices,
     }
     return render(request, 'manager/manager_dashboard.html', context)
 
 def director_dashboard(request):
-    return render(request, 'director_dashboard.html')
+    return render(request, 'Director/director_dashboard.html')
 
 def hr_dashboard(request):
     return render(request, 'hr_dashboard.html')
 
+def admin_dashboard(request):
+    today = timezone.now().date()
+    next_month = today + timedelta(days=30)
+
+    upcoming_birthdays = BasicInformation.objects.filter(
+        date_of_birth__month=today.month, 
+        date_of_birth__day__gte=today.day, 
+        date_of_birth__day__lte=next_month.day
+    )
+    upcoming_anniversaries = BasicInformation.objects.filter(
+        date_of_joining__month=today.month, 
+        date_of_joining__day__gte=today.day, 
+        date_of_joining__day__lte=next_month.day
+    )
+    employees_on_leave = Leave.objects.filter(
+        start_date__lte=today, 
+        end_date__gte=today
+    )
+
+    employees_working_from_home = WorkFromHome.objects.all()
+    assigned_assets = Asset.objects.filter(owned_by__isnull=False)
+    
+
+    # Get the assigned devices for the manager's dashboard
+    assigned_devices = AssignedDevice.objects.select_related('asset', 'employee').all()
+
+    return render(request, 'admin/admin_dashboard.html', {'assigned_devices': assigned_devices, 'upcoming_birthdays': upcoming_birthdays, 'upcoming_anniversaries': upcoming_anniversaries, 'employees_on_leave': employees_on_leave, 'employees_working_from_home': employees_working_from_home, 'assigned_assets': assigned_assets
+        
+    })
+    
 
 def employee_register(request):
     roles = Role.objects.all()
@@ -180,7 +217,6 @@ def employee_register(request):
         employee.save()
         messages.success(request, 'Employee registered successfully')
         return redirect('employee_login')
-
     return render(request, 'bluethinkincapp/employee_register.html', {'roles': roles, 'departments': departments})
 
 
@@ -241,7 +277,10 @@ def employee_login(request):
                     return redirect('manager_dashboard')  # Default manager dashboard
 
             elif employee.role.name == 'Director':
-                return redirect('director_dashboard')  # Redirect to director's dashboard
+                return redirect('director_dashboard')
+            
+            elif employee.role.name == 'Admin':
+                return redirect('admin_dashboard')  # Redirect to director's dashboard
                 
             elif employee.role.name == 'HR':
                 return redirect('hr_dashboard')  # Redirect to HR's dashboard
@@ -262,7 +301,6 @@ def employee_profile(request):
     except Employee.DoesNotExist:
         messages.error(request, "Employee profile not found.")
         return redirect('dashboard')
-
     
     
     account_form = AccountDetailsForm(instance=employee)
@@ -352,7 +390,6 @@ def employee_profile(request):
                 messages.success(request, 'Previous employment details updated successfully.')
             else:
                 messages.error(request, 'Error updating previous employment details.')
-
     
     context = {
         'employee': employee,
@@ -392,7 +429,8 @@ def logout_for_the_day(request):
 def is_holiday(day):
     holidays = [
         date(2024, 1, 1),  # New Year's Day
-        date(2024, 11, 14),  # Diwali
+        date(2024, 11, 14),
+          # Diwali
         # Add more holidays as required
     ]
     return day in holidays
@@ -456,8 +494,8 @@ class ApplyLeaveView(View):
         if (current_date - joining_date).days < 90:
             total_casual_leave = 0 
         else:
-            eligible_months = max(0, current_month - joining_date.month + 1)
-            total_casual_leave = min(12, eligible_months)
+            eligible_months = (current_year - joining_date.year) * 12 + current_month - joining_date.month + 1
+            total_casual_leave = min(12, eligible_months - 3)
 
         # Filter applied casual leaves
         applied_leaves = Leave.objects.filter(
@@ -513,8 +551,8 @@ class ApplyLeaveView(View):
             if (current_date.date() - joining_date).days < 90:
                 total_casual_leave = 0
             else:
-                eligible_months = max(0, current_month - joining_date.month + 1)
-                total_casual_leave = min(12, eligible_months)
+                eligible_months = (current_year - joining_date.year) * 12 + current_month - joining_date.month + 1
+                total_casual_leave = min(12, eligible_months - 3)
 
             applied_leaves = Leave.objects.filter(
                 employee=employee,
@@ -552,7 +590,6 @@ class ApplyLeaveView(View):
             return redirect('apply_leave')
 
         return render(request, "bluethinkincapp/apply_leave.html", {"form": form})
-
 
 @method_decorator(login_required, name='dispatch')
 class MangerLeaveView(View):
@@ -633,11 +670,6 @@ class MangerTimesheetView(View):
         action = request.POST.get("action")
         timesheet_ids = request.POST.getlist("timesheet_ids")
         acknowledgment = request.POST.get("acknowledgment") == "on"
-
-        if not timesheet_ids:
-            messages.error(request, "Please select at least one timesheet.")
-            return redirect("manager_approve_timesheet")
-
         for timesheet_id in timesheet_ids:
             timesheet = TimeSheet.objects.get(id=timesheet_id)
 
@@ -699,18 +731,36 @@ def add_time_sheet(request):
         form = TimeSheetForm(request.POST)
         if form.is_valid():
             timesheet = form.save(commit=False)
-            employee = Employee.objects.get(user=request.user)  # Associate with logged-in user
+            employee = Employee.objects.get(user=request.user)
             timesheet.employee = employee
+
+            # Check if the user is a manager and assign the project
+            if request.user.is_staff:  # Assuming manager is 'staff' or any role you want
+                assigned_project_id = request.POST.get('assigned_project')
+                assigned_project = Project.objects.get(id=assigned_project_id)
+                timesheet.project = assigned_project
+            
             timesheet.save()
             return redirect('add_time_sheet')
         else:
             print(form.errors)  # Debugging form errors
     else:
         form = TimeSheetForm()
-    
+
     # Filter timesheets by logged-in user
     timesheet = TimeSheet.objects.filter(employee__user=request.user)
-    return render(request, 'bluethinkincapp/add_time_sheet.html', {'form': form, 'timesheet': timesheet})
+    
+    # Get all available projects for the manager (or just the assigned project for employees)
+    if request.user.is_staff:
+        projects = Project.objects.all()  # Managers can view all projects
+    else:
+        projects = Project.objects.filter(employee__user=request.user)  # Employees only see their assigned projects
+    
+    return render(request, 'bluethinkincapp/add_time_sheet.html', {
+        'form': form, 
+        'timesheet': timesheet, 
+        'projects': projects
+    })
 
 
 @login_required
@@ -723,8 +773,8 @@ def edit_time_sheet(request):
             timesheet = TimeSheet.objects.get(pk=time_sheet_id)
         except TimeSheet.DoesNotExist:
             return HttpResponseForbidden("Timesheet not found.")
-        
-        # Validate the logged-in user's access to this timesheet
+                                                                                                                                                                                                                        
+        # Validate the logged-in user's access to this timeshee
         if timesheet.employee.user != request.user and not request.user.is_staff:
             return HttpResponseForbidden("You do not have permission to edit this timesheet.")
         
@@ -743,7 +793,7 @@ def edit_time_sheet(request):
 
 
 
-
+@login_required
 def add_project(request):
     if request.method == 'POST':
         form = ProjectForm(request.POST)
@@ -755,10 +805,97 @@ def add_project(request):
             print(form.errors)  # Log the form errors
     else:
         form = ProjectForm()
-
     # Fetch all projects for dropdown
     projects = Project.objects.values("project_name", "vendor_name") 
-    return render(request, 'manager/add_project.html', {'form': form, 'projects': projects})                  
+    return render(request, 'manager/add_project.html', {'form': form, 'projects': projects})                 
 
 
+@login_required
+def manage_holidays(request):
+    if request.method == 'POST':
+        form = HolidayForm(request.POST)
+        if form.is_valid():
+            holiday = form.save()
+            # Return success response
+            return JsonResponse({'success': True, 'holiday': holiday.name})
+        else:
+            # If the form is not valid, return errors
+            return JsonResponse({'success': False, 'errors': form.errors})
 
+    else:
+        form = HolidayForm()
+        holidays = Holiday.objects.all()
+        holiday_events = [
+            {"title": holiday.name, "start": holiday.date.isoformat(), "description": holiday.description}
+            for holiday in holidays
+        ]
+        holiday_events_json = json.dumps(holiday_events)
+        return render(request, 'Director/manage_holidays.html', {
+            'form': form,
+            'holidays': holidays,
+            'holiday_events_json': holiday_events_json,
+        })
+    
+
+
+def assign_device(request):
+    if request.method == "POST":
+        asset_name = request.POST.get('asset_name')
+        model_number = request.POST.get('model_number')
+        serial_number = request.POST.get('serial_number')
+        processor = request.POST.get('processor')
+        storage = request.POST.get('storage')
+        ram = request.POST.get('ram')
+        employee_id = request.POST.get('employee_id')
+        assigned_date = request.POST.get('assigned_date')
+        category = request.POST.get('category')
+
+        # Get employee object
+        employee = Employee.objects.get(id=employee_id)
+
+        # Create new asset
+        asset = Asset.objects.create(
+            asset_name=asset_name,
+            model_number=model_number,
+            serial_number=serial_number,
+            processor=processor,
+            storage=storage,
+            ram=ram,
+            category=category,
+        )
+
+        # Assign asset to employee
+        assigned_device = AssignedDevice.objects.create(
+            asset=asset,
+            employee=employee,
+            assigned_date=assigned_date,
+            category=category,
+        )
+
+        messages.success(request, "Device assigned successfully!")
+        return redirect('assign_device')  # redirect to the same page to clear the form
+
+    
+    assets = Asset.objects.all()
+    employees = Employee.objects.all()
+    assigned_devices = AssignedDevice.objects.all()
+
+    return render(request, 'admin/assigned_device.html', {
+        'assets': assets,
+        'employees': employees,
+        'assigned_devices': assigned_devices,
+    })
+
+@login_required
+def manage_assign_projects(request):
+    if request.method == 'POST':
+        form = ProjectAssignmentForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('manage_assign_projects')
+    else:
+        form = ProjectAssignmentForm()
+    
+    assignments = ProjectAssignment.objects.all()
+
+    return render(request, 'manager/manage_assign_projects.html', {'form': form, 'assignments': assignments})

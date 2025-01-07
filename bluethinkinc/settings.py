@@ -169,3 +169,5 @@ CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'  # Store task results in Redi
 
 MEDIA_URL = '/media/'  # URL to access media files in development
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')  # Directory to store uploaded files
+
+

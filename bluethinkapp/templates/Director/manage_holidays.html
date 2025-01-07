@@ -1,0 +1,279 @@
+{% extends 'base.html' %}
+
+{% block title %}Holiday{% endblock %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Manage Holidays</title>
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
+    <style>
+        /* Body Styles */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f9f9f9;  /* Light background color for the page */
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;  /* Ensure the page fills the whole height */
+        }
+
+        /* Header Section */
+        h1 {
+            background-color: #4CAF50;  /* Green header */
+            color: white;
+            padding: 20px;
+            margin: 0;
+            text-align: center;
+        }
+
+        /* Calendar Container */
+        #calendar {
+            max-width: 100%;
+            margin: 30px auto;
+            padding: 20px;
+            border: 1px solid #ddd;
+            background-color: white;  /* Ensure calendar has a white background */
+        }
+
+        /* Modal Styles */
+        #holiday-modal {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #fff;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            z-index: 1000;
+            width: 300px;
+            border-radius: 8px;
+        }
+
+        #overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        /* Form Input Styles */
+        input, textarea, button {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        /* Table Styles */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            font-weight: bold;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 24px;
+                padding: 15px;
+            }
+
+            #calendar {
+                margin: 15px auto;
+            }
+
+            #holiday-modal {
+                width: 90%;
+                max-width: 400px;
+            }
+        }
+
+        /* Content Wrapper */
+        .content-wrapper {
+            flex: 1;
+            padding: 120px;
+        }
+
+    </style>
+</head>
+<body>
+    <div class="content-wrapper">
+        <h1>Manage Holidays</h1>
+
+        <!-- Calendar for selecting and viewing holidays -->
+        <div id="calendar"></div>
+
+        <!-- Modal Form for Adding Holidays -->
+        <div id="holiday-modal">
+            <form method="post" id="holiday-form">
+                {% csrf_token %}
+                <label for="holiday-name">Holiday Name:</label><br>
+                <input type="text" id="holiday-name" name="name" required><br><br>
+                <label for="holiday-date">Date:</label><br>
+                <input type="text" id="holiday-date" name="date" readonly required><br><br>
+                <label for="holiday-description">Description:</label><br>
+                <textarea id="holiday-description" name="description"></textarea><br><br>
+                <button type="submit">Add Holiday</button>
+                <button type="button" onclick="closeModal()">Cancel</button>
+            </form>
+        </div>
+
+        <!-- Overlay -->
+        <div id="overlay" onclick="closeModal()"></div>
+
+        <!-- List of holidays -->
+        <h2>Holiday List</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Date</th>
+                    <th>Description</th>
+                </tr>
+            </thead>
+            <tbody id="holiday-list">
+                {% for holiday in holidays %}
+                <tr>
+                    <td>{{ holiday.name }}</td>
+                    <td>{{ holiday.date }}</td>
+                    <td>{{ holiday.description }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const calendarEl = document.getElementById('calendar');
+        const modal = document.getElementById('holiday-modal');
+        const overlay = document.getElementById('overlay');
+        const holidayDateInput = document.getElementById('holiday-date');
+        const holidayForm = document.getElementById('holiday-form');
+        const holidayList = document.getElementById('holiday-list');
+        
+        // Ensure holiday_events is correctly injected as JSON
+        console.log('{{ holiday_events_json|escapejs }}');
+        const holidays = JSON.parse('{{ holiday_events_json|escapejs }}');
+        
+        console.log('Holidays:', holidays);
+        
+        const calendar = new FullCalendar.Calendar(calendarEl, {
+            initialView: 'dayGridMonth',
+            events: holidays,
+            selectable: true,
+            select: function (info) {
+                openModal(info.startStr);
+            },
+            eventClick: function (info) {
+                alert('Holiday: ' + info.event.title + '\nDescription: ' + info.event.extendedProps.description);
+            },
+        });
+        
+        calendar.render();
+        
+        function openModal(date) {
+            holidayDateInput.value = date;
+            modal.style.display = 'block';
+            overlay.style.display = 'block';
+        }
+        
+        window.closeModal = function () {
+            modal.style.display = 'none';
+            overlay.style.display = 'none';
+        };
+        
+        holidayForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            const formData = new FormData(holidayForm);
+            fetch(window.location.href, { // Updated to use full URL
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                }
+            })
+                .then(response => {
+                    if (response.ok) {
+                        return response.json();
+                    } else {
+                        throw new Error('Failed to add holiday');
+                    }
+                })
+                .then(data => {
+                    if (data.success) {
+                        const newHoliday = {
+                            title: formData.get('name'),
+                            start: formData.get('date'),
+                            description: formData.get('description'),
+                        };
+    
+                        // Add the new holiday to the calendar
+                        calendar.addEvent(newHoliday);
+    
+                        // Add the new holiday to the holiday list dynamically
+                        const newRow = holidayList.insertRow();
+                        newRow.insertCell(0).innerText = newHoliday.title;
+                        newRow.insertCell(1).innerText = newHoliday.start;
+                        newRow.insertCell(2).innerText = newHoliday.description;
+    
+                        // Reload the calendar and show updated events
+                        calendar.render();
+    
+                        closeModal();
+                    } else {
+                        // Handle errors returned by the server
+                        alert('Error: ' + JSON.stringify(data.errors));
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('There was an error adding the holiday. Please try again.');
+                });
+        });
+    });
+</script>
+</body>
+</html>
+
+{% endblock %}

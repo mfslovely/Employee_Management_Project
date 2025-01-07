@@ -34,3 +34,6 @@ class LeaveAdmin(admin.ModelAdmin):
     search_fields = ('employee__first_name', 'employee__last_name', 'leave_type')
     list_filter = ( 'start_date', 'end_date', 'status')
     
+
+
+    

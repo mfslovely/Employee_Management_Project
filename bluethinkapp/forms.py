@@ -1,5 +1,5 @@
 from django import forms
-from .models import Employee,Claim,Leave,TimeSheet,Project,LeaveType
+from .models import Employee,Claim,Leave,TimeSheet,Project,LeaveType,Holiday,ProjectAssignment
 
 class AccountDetailsForm(forms.ModelForm):
     class Meta:
@@ -88,6 +88,7 @@ class TimeSheetForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'rows': 3}),
             'comment': forms.Textarea(attrs={'placeholder': 'Add comments here (optional)', 'rows': 3}),
         }
+        project = forms.ModelChoiceField(queryset=Project.objects.all(), required=True)
 
         def save(self, commit=True, user=None):
             instance = super().save(commit=False)
@@ -103,4 +104,21 @@ class ProjectForm(forms.ModelForm):
         fields = ['project_name', 'start_date', 'end_date','status','project_type','vendor_name']  # Include start_date in the form fields
         widgets = {
             'start_date': forms.DateInput(attrs={'type': 'date'})  # Use a date picker for the start date
+        }
+
+class ProjectAssignmentForm(forms.ModelForm):
+    class Meta:
+        model = ProjectAssignment
+        fields = ['project', 'employee','assigned_date']
+
+        widgets = {
+                'assigned_date': forms.DateInput(attrs={'type': 'date'}),
+            }
+    
+class HolidayForm(forms.ModelForm):
+    class Meta:
+        model = Holiday
+        fields = ['name', 'date', 'description', 'employees', 'leave']
+        widgets = {
+            'date': forms.DateInput(attrs={'type': 'date'}),
         }

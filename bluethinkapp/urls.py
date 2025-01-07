@@ -24,6 +24,10 @@ urlpatterns = [
     path('hr/dashboard/', views.hr_dashboard, name='hr_dashboard'),
     path('add-project/', views.add_project, name='add_project'),
     path('approve-timesheet/',MangerTimesheetView.as_view(), name='manager_approve_timesheet'),
+    path('manage_holidays/', views.manage_holidays, name='manage_holidays'),
+    path('admin-dashboard/', views.admin_dashboard, name='admin_dashboard'),
+    path('assign-device/', views.assign_device, name='assign_device'),
+    path('assign-project/',views.manage_assign_projects, name='manage_assign_projects'),
 
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

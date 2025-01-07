@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}Assign Projects{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <!-- Assign Project Form -->
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h2 class="mb-0">Assign Project</h2>
+        </div>
+        <div class="card-body">
+            <form method="post">
+                {% csrf_token %}
+                <div class="mb-3">
+                    <label for="id_project" class="form-label">Project</label>
+                    {{ form.project }}
+                </div>
+                <div class="mb-3">
+                    <label for="id_employee" class="form-label">Employee</label>
+                    {{ form.employee }}
+                </div>
+                <div class="mb-3">
+                    <label for="id_assigned_date" class="form-label">Assigned Date</label>
+                    {{ form.assigned_date }}
+                </div>
+                <button type="submit" class="btn btn-success">Assign Project</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Assigned Projects List -->
+    <div class="card">
+        <div class="card-header bg-secondary text-white">
+            <h2 class="mb-0">Assigned Projects</h2>
+        </div>
+        <div class="card-body">
+            <table class="table table-bordered table-hover">
+                <thead class="thead-dark">
+                    <tr>
+                        <th>Project Name</th>
+                        <th>Employee</th>
+                        <th>Assigned Date</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for assignment in assignments %}
+                        <tr>
+                            <td>{{ assignment.project.project_name }}</td>
+                            <td>{{ assignment.employee.first_name }} {{ assignment.employee.last_name }}</td>
+                            <td>{{ assignment.assigned_date }}</td>
+                        </tr>
+                    {% empty %}
+                        <tr>
+                            <td colspan="3" class="text-center">No projects assigned yet.</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
