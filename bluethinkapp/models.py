@@ -303,14 +303,20 @@ class HRPolicy(models.Model):
     
 
 class Project(models.Model):
-    employee = models.ForeignKey(Employee,null=True, on_delete=models.CASCADE)  # Renamed `project` to `Project` to follow conventions
+    # This could be the creator or manager of the project (if necessary)
+    employee = models.ForeignKey(Employee, null=True, on_delete=models.CASCADE)  
+    
+    # This should be the employee directly assigned to the project
+    assigned_to = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='assigned_projects',null=True)  
+    
     project_name = models.CharField(max_length=100)
     description = models.TextField()
     vendor_name = models.CharField(max_length=255, blank=True, null=True)
     status = models.CharField(max_length=50, choices=[('active', 'Active'), ('inactive', 'Inactive')])
-    project_type = models.CharField(max_length=50, choices=[('billable', 'Billable'), ('non_billable', 'Non-Billable')], default='Billable' )
+    project_type = models.CharField(max_length=50, choices=[('billable', 'Billable'), ('non_billable', 'Non-Billable')], default='Billable')
     start_date = models.DateField()
     end_date = models.DateField()
+    
     STATUS_CHOICES = [
         ('active', 'Active'),
         ('inactive', 'Inactive'),
@@ -322,37 +328,24 @@ class Project(models.Model):
     def __str__(self):
         return self.project_name
 
+class ProjectAssignment(models.Model):
+    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='assignments')
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)  # Use your Employee model if different
+    assigned_date = models.DateField(default=now)
+
+    def __str__(self):
+        return f"{self.employee.first_name} - {self.project.project_name}"
 
 class TimeSheet(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
 
-    PROJECT_CHOICES = [
-        ('Python_Training_on_bench', 'Python_Training_on_bench'),
-        ('On Bench', 'On Bench'),
-        ('Other', 'Other'),  # Option for custom project
-    ]
-
-    project = models.CharField(
-        max_length=100,
-        choices=PROJECT_CHOICES,
-        default='Python_Training_on_bench',
-    )
-    
-    # Custom project name for 'Other' project
-    custom_project_name = models.CharField(
-        max_length=100,
-        blank=True,
-        null=True,
-        help_text="Enter custom project name if 'Other' is selected"
-    )
-
-    # Linking Timesheet to Projects if 'Other' is selected and a custom name is provided.
-    assigned_project = models.ForeignKey(
-        'Project', 
+    # Link to the Project model to dynamically filter projects
+    project_assignment = models.ForeignKey(
+        ProjectAssignment,  # Reference to ProjectAssignment model
         on_delete=models.CASCADE,
-        blank=True,
-        null=True,
-        help_text="Select a project from the available list"
+        related_name='timesheets',
+        null=True,  # This can be null if not every employee has a project assigned when they fill out their timesheet
+        blank=True
     )
 
     date = models.DateField()
@@ -374,11 +367,9 @@ class TimeSheet(models.Model):
     acknowledgment = models.BooleanField(default=False)
 
     def __str__(self):
-        # Return custom project name if project is 'Other', otherwise return the default project
-        project_name = self.custom_project_name if self.project == 'Other' else self.project
+        project_name = self.custom_project_name if self.custom_project_name else self.assigned_project.project_name
         employee_name = self.employee.user.username if hasattr(self.employee, 'user') else "Unknown Employee"
         return f"{employee_name} - {project_name}"
-
 
 class Training(models.Model):
     timesheet  = models.OneToOneField(TimeSheet, on_delete=models.CASCADE)
@@ -446,10 +437,3 @@ class AssignedDevice(models.Model):
         return f"{self.asset.asset_name} assigned to {self.employee.first_name}"
 
 
-class ProjectAssignment(models.Model):
-    project = models.ForeignKey(Project, on_delete=models.CASCADE, related_name='assignments')
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)  # Use your Employee model if different
-    assigned_date = models.DateField(default=now)
-
-    def __str__(self):
-        return f"{self.employee.username} - {self.project.project_name}"

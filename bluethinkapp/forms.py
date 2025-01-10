@@ -80,28 +80,28 @@ class ApplyLeaveForm(forms.ModelForm):
 class TimeSheetForm(forms.ModelForm):
     class Meta:
         model = TimeSheet
-        fields = ['project', 'date', 'hours', 'minutes', 'description','comment']
-        widgets = {
-            'date': forms.DateInput(attrs={'type': 'date'}),
-            'hours': forms.NumberInput(attrs={'min': 0}),
-            'minutes': forms.NumberInput(attrs={'min': 0, 'max': 59}),
-            'description': forms.Textarea(attrs={'rows': 3}),
-            'comment': forms.Textarea(attrs={'placeholder': 'Add comments here (optional)', 'rows': 3}),
-        }
-        project = forms.ModelChoiceField(queryset=Project.objects.all(), required=True)
+        fields = [ 'date', 'hours', 'minutes', 'description']
+        date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
 
-        def save(self, commit=True, user=None):
-            instance = super().save(commit=False)
-            if user:
-                instance.employee = Employee.objects.get(user=user)  # Force correct employee
-            if commit:
-                instance.save()
-            return instance
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Automatically populate the project assignment for the employee based on their current assignment
+        if 'employee' in self.data:
+            employee_id = self.data.get('employee')
+            try:
+                employee = Employee.objects.get(id=employee_id)
+                # Get the latest project assignment for the employee
+                project_assignment = ProjectAssignment.objects.filter(employee=employee, assigned_date__lte=timezone.now()).last()
+                if project_assignment:
+                    self.fields['project_assignment'].initial = project_assignment
+            except Employee.DoesNotExist:
+                pass
+
 
 class ProjectForm(forms.ModelForm):
     class Meta:
         model = Project
-        fields = ['project_name', 'start_date', 'end_date','status','project_type','vendor_name']  # Include start_date in the form fields
+        fields = ['project_name', 'start_date', 'end_date','status','project_type','vendor_name','assigned_to']  # Include start_date in the form fields
         widgets = {
             'start_date': forms.DateInput(attrs={'type': 'date'})  # Use a date picker for the start date
         }
@@ -109,7 +109,7 @@ class ProjectForm(forms.ModelForm):
 class ProjectAssignmentForm(forms.ModelForm):
     class Meta:
         model = ProjectAssignment
-        fields = ['project', 'employee','assigned_date']
+        fields = ['project', 'employee','assigned_date',]
 
         widgets = {
                 'assigned_date': forms.DateInput(attrs={'type': 'date'}),

@@ -119,11 +119,11 @@
                 {% for assigned_device in assigned_devices %}
                     <tr>
                         <td>{{ assigned_device.asset.asset_name }}</td>
-                        <td>{{ assigned_device.asset.model_number }}</td>
-                        <td>{{ assigned_device.asset.serial_number }}</td>
-                        <td>{{ assigned_device.asset.processor }}</td>
-                        <td>{{ assigned_device.asset.storage }}</td>
-                        <td>{{ assigned_device.asset.ram }}</td>
+                        <td>{{ assigned_device.asset.model_number|default:"-"  }}</td>
+                        <td>{{ assigned_device.asset.serial_number |default:"-"  }}</td>
+                        <td>{{ assigned_device.asset.processor |default:"-" }}</td>
+                        <td>{{ assigned_device.asset.storage|default:"-"   }}</td>
+                        <td>{{ assigned_device.asset.ram |default:"-"  }}</td>
                         <td>{{ assigned_device.employee.first_name }} {{ assigned_device.employee.last_name }}</td>
                         <td>{{ assigned_device.assigned_date }}</td>
                         <td>{{ assigned_device.category }}</td>

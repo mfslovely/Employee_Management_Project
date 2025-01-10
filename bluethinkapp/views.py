@@ -57,29 +57,29 @@ def dashboard(request):
         date_of_birth__day__gte=today.day, 
         date_of_birth__day__lte=next_month.day
     )
-
     upcoming_anniversaries = BasicInformation.objects.filter(
         date_of_joining__month=today.month, 
         date_of_joining__day__gte=today.day, 
         date_of_joining__day__lte=next_month.day
     )
-
     employees_on_leave = Leave.objects.filter(
         start_date__lte=today, 
         end_date__gte=today
     )
 
     employees_working_from_home = WorkFromHome.objects.all()
-    
     assigned_assets = Asset.objects.filter(owned_by__isnull=False)
+    
+
+    # Get the assigned devices for the manager's dashboard
     assigned_devices = AssignedDevice.objects.select_related('asset', 'employee').all()
     context = {
         'upcoming_birthdays': upcoming_birthdays,
         'upcoming_anniversaries': upcoming_anniversaries,
         'employee_on_leave': employees_on_leave,
         'employee_working_from_home': employees_working_from_home,
-        'assigned_assets' : assigned_assets,
-        'assigned_device' : assigned_devices
+        'assigned_assets': assigned_assets,
+        'assigned_devices': assigned_devices,
     }
     return render(request, 'bluethinkincapp/deshboard.html', context)
 
@@ -149,6 +149,14 @@ def admin_dashboard(request):
 
     # Get the assigned devices for the manager's dashboard
     assigned_devices = AssignedDevice.objects.select_related('asset', 'employee').all()
+    context = {
+        'upcoming_birthdays': upcoming_birthdays,
+        'upcoming_anniversaries': upcoming_anniversaries,
+        'employee_on_leave': employees_on_leave,
+        'employee_working_from_home': employees_working_from_home,
+        'assigned_assets': assigned_assets,
+        'assigned_devices': assigned_devices,
+    }
 
     return render(request, 'admin/admin_dashboard.html', {'assigned_devices': assigned_devices, 'upcoming_birthdays': upcoming_birthdays, 'upcoming_anniversaries': upcoming_anniversaries, 'employees_on_leave': employees_on_leave, 'employees_working_from_home': employees_working_from_home, 'assigned_assets': assigned_assets
         
@@ -727,40 +735,65 @@ def claims(request):
 
 @login_required
 def add_time_sheet(request):
+    # Ensure employee is retrieved correctly
+    try:
+        employee = Employee.objects.get(user=request.user)
+    except Employee.DoesNotExist:
+        # Handle case if the employee does not exist for some reason
+        return HttpResponse("Employee not found", status=404)
+    
     if request.method == 'POST':
         form = TimeSheetForm(request.POST)
+        
         if form.is_valid():
+            # Create timesheet object but don't save it yet
             timesheet = form.save(commit=False)
-            employee = Employee.objects.get(user=request.user)
-            timesheet.employee = employee
+            timesheet.employee = employee  # Associate the timesheet with the logged-in employee
 
-            # Check if the user is a manager and assign the project
-            if request.user.is_staff:  # Assuming manager is 'staff' or any role you want
-                assigned_project_id = request.POST.get('assigned_project')
-                assigned_project = Project.objects.get(id=assigned_project_id)
-                timesheet.project = assigned_project
-            
+            # Get the assigned project through ProjectAssignment
+            assigned_project_id = request.POST.get('assigned_project')
+            if assigned_project_id:
+                try:
+                    # Find the ProjectAssignment for the given employee
+                    assigned_project = ProjectAssignment.objects.get(
+                        project_id=assigned_project_id,
+                        employee=employee
+                    )
+                    # Link the timesheet to the ProjectAssignment instead of directly to Project
+                    timesheet.project_assignment = assigned_project
+                except ProjectAssignment.DoesNotExist:
+                    form.add_error('assigned_project', 'Selected project is not assigned to you.')
+                    return render(request, 'bluethinkincapp/add_time_sheet.html', {
+                        'form': form,
+                        'projects': Project.objects.filter(assigned_to=employee),
+                        'timesheet': TimeSheet.objects.filter(employee=employee),
+                    })
+            # Save the timesheet to the database
             timesheet.save()
-            return redirect('add_time_sheet')
+            return redirect('add_time_sheet')  # Redirect after successful form submission
         else:
-            print(form.errors)  # Debugging form errors
+            print(form.errors)  # This will print out any form validation errors to the console
     else:
         form = TimeSheetForm()
 
-    # Filter timesheets by logged-in user
-    timesheet = TimeSheet.objects.filter(employee__user=request.user)
-    
-    # Get all available projects for the manager (or just the assigned project for employees)
-    if request.user.is_staff:
-        projects = Project.objects.all()  # Managers can view all projects
-    else:
-        projects = Project.objects.filter(employee__user=request.user)  # Employees only see their assigned projects
-    
+    # Filter projects for the logged-in user
+    if request.user.is_staff:  # If the user is a manager
+        projects = Project.objects.all()  # Managers can see all projects
+    else:  # If the user is an employee
+        # Only projects assigned to the employee through ProjectAssignment
+        projects = Project.objects.filter(assignments__employee=employee)
+
+    # Debugging: Print the employee and projects
+    print(f"Employee: {employee.first_name} ============")
+    print(f"Assigned Projects: {projects}=============")
+
     return render(request, 'bluethinkincapp/add_time_sheet.html', {
-        'form': form, 
-        'timesheet': timesheet, 
-        'projects': projects
+        'form': form,
+        'timesheet': TimeSheet.objects.filter(employee__user=request.user),
+        'projects': projects,  # Pass the filtered list of projects
+        'employee_projects': projects,  # Ensure employee's projects are passed to the template
     })
+
 
 
 @login_required
