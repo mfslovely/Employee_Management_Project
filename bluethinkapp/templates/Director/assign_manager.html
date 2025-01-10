@@ -1,0 +1,248 @@
+{% extends 'base.html' %}
+{% block title %}Manage Managers{% endblock %}
+{% block content %}
+<!-- Main Content Wrapper -->
+<div class="container">
+    <h1 class="page-title">Assign Manager</h1>
+
+    <!-- Form for assigning managers -->
+    <div class="form-wrapper">
+        <form method="post" class="assign-manager-form">
+            {% csrf_token %}
+            
+            <label for="employee" class="form-label">Select Employee:</label>
+            <select name="employee_id" id="employee" class="form-select" required>
+                {% if employees %}
+                    {% for employee in employees %}
+                        <option value="{{ employee.id }}" {% if employee.role.name == 'Manager' %}disabled{% endif %}>
+                            {{ employee.first_name }} {{ employee.last_name }} ({{ employee.department.name }})
+                        </option>
+                    {% endfor %}
+                {% else %}
+                    <option value="" disabled>No employees available</option>
+                {% endif %}
+            </select>
+            
+            <label for="department" class="form-label">Select Department:</label>
+            <select name="department_id" id="department" class="form-select" required>
+                {% if departments %}
+                    {% for department in departments %}
+                        <option value="{{ department.id }}">{{ department.name }}</option>
+                    {% endfor %}
+                {% else %}
+                    <option value="" disabled>No departments available</option>
+                {% endif %}
+            </select>
+            
+            <button type="submit" class="btn-submit">Assign Manager</button>
+        </form>
+    </div>
+
+    <!-- Assigned Managers Section -->
+    <div class="assigned-managers">
+        <h2 class="assigned-managers-title">Assigned Managers</h2>
+        {% if managers %}
+            <table class="manager-table">
+                <thead>
+                    <tr>
+                        <th>Manager Name</th>
+                        <th>Department</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for manager in managers %}
+                        <tr>
+                            <td>{{ manager.first_name }} {{ manager.last_name }}</td>
+                            <td>{{ manager.department.name }}</td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p class="no-managers">No managers assigned yet.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Modal for Success Message -->
+<div id="success-modal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <p id="success-message">Manager successfully assigned!</p>
+    </div>
+</div>
+
+{% block extra_css %}
+<style>
+    /* Container and Page Title */
+    .container {
+        max-width: 1200px;
+        margin: 99px auto;
+        padding: 20px;
+        background: #f8f9fa;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .page-title {
+        font-size: 2.5rem;
+        font-weight: bold;
+        margin-bottom: 20px;
+        color: #333;
+        text-align: center;
+    }
+
+    /* Form Wrapper */
+    .form-wrapper {
+        background-color: #fff;
+        padding: 25px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        margin-bottom: 40px;
+    }
+
+    .form-label {
+        font-size: 1.1rem;
+        font-weight: bold;
+        margin-bottom: 10px;
+        color: #555;
+    }
+
+    .form-select {
+        width: 100%;
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        margin-bottom: 20px;
+        font-size: 1rem;
+        background-color: #fafafa;
+        transition: all 0.3s ease;
+    }
+
+    .form-select:focus {
+        border-color: #007bff;
+        background-color: #fff;
+    }
+
+    .btn-submit {
+        background-color: #007bff;
+        color: white;
+        padding: 12px 24px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 1.1rem;
+        transition: background-color 0.3s ease;
+    }
+
+    .btn-submit:hover {
+        background-color: #0056b3;
+    }
+
+    /* Assigned Managers Table */
+    .assigned-managers {
+        margin-top: 40px;
+    }
+
+    .assigned-managers-title {
+        font-size: 1.8rem;
+        font-weight: bold;
+        margin-bottom: 30px;
+        color: #333;
+        text-align: center;
+    }
+
+    .manager-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    }
+
+    .manager-table th,
+    .manager-table td {
+        text-align: left;
+        padding: 12px;
+        border-bottom: 2px solid #ddd;
+    }
+
+    .manager-table th {
+        background-color: #007bff;
+        color: white;
+    }
+
+    .manager-table td {
+        background-color: #f9f9f9;
+    }
+
+    .manager-table tr:hover {
+        background-color: #f1f1f1;
+    }
+
+    .no-managers {
+        text-align: center;
+        font-size: 1.3rem;
+        color: #888;
+    }
+
+    /* Modal for Success Message */
+    .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        display: none;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .modal-content {
+        background-color: white;
+        padding: 30px;
+        border-radius: 8px;
+        width: 400px;
+        text-align: center;
+        animation: modalAnimation 0.3s ease-in-out;
+    }
+
+    .close-btn {
+        position: absolute;
+        top: 5px;
+        right: 10px;
+        font-size: 30px;
+        cursor: pointer;
+    }
+
+    /* Modal Animation */
+    @keyframes modalAnimation {
+        0% {
+            opacity: 0;
+            transform: scale(0.8);
+        }
+        100% {
+            opacity: 1;
+            transform: scale(1);
+        }
+    }
+</style>
+
+
+{% block extra_js %}
+<script>
+    // Show modal with success message
+    function showModal(message) {
+        document.getElementById('success-message').innerText = message;
+        document.getElementById('success-modal').style.display = 'flex';
+    }
+
+    // Close the success modal
+    function closeModal() {
+        document.getElementById('success-modal').style.display = 'none';
+    }
+</script>
+{% endblock %}
+{% endblock %}
+
+{% endblock %}

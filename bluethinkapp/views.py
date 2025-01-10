@@ -932,3 +932,48 @@ def manage_assign_projects(request):
     assignments = ProjectAssignment.objects.all()
 
     return render(request, 'manager/manage_assign_projects.html', {'form': form, 'assignments': assignments})
+
+
+
+
+@login_required
+def assign_manager_view(request):
+    # if request.user.employee.role.name != 'Director':
+    #     messages.error(request, 'Access denied: Only directors can assign managers.')
+    #     return redirect('assign_manager')  # Redirect non-directors to their dashboard
+    
+    if request.method == 'POST':
+        employee_id = request.POST.get('employee_id')
+        department_id = request.POST.get('department_id')
+        
+        try:
+            employee = Employee.objects.get(id=employee_id)
+            department = Department.objects.get(id=department_id)
+        except (Employee.DoesNotExist, Department.DoesNotExist):
+            messages.error(request, 'Invalid employee or department selected.')
+            return redirect('assign_manager')
+        
+        # Check if the employee already has the role 'Manager' and is assigned to the department
+        if employee.role and employee.department and employee.role.name == 'Manager' and employee.department == department:
+            messages.error(request, f"{employee.first_name} {employee.last_name} is already a manager in the {department.name} team.")
+            return redirect('assign_manager')
+        
+        # Check if the department already has a manager
+        if Employee.objects.filter(role__name='Manager', department=department).exists():
+            messages.error(request, f"A manager is already assigned to the {department.name} team.")
+            return redirect('assign_manager')
+        
+        # Update the employee's role to manager and assign the department
+        employee.role = Role.objects.get(name='Manager')
+        employee.department = department
+        employee.save()
+
+        messages.success(request, f"{employee.first_name} {employee.last_name} has been assigned as a manager of the {department.name} team.")
+        return redirect('director_dashboard')  # Redirect to director's dashboard after assignment
+
+    # Fetch all employees (including those who are managers)
+    employees = Employee.objects.all()  # Fetch all employees
+    departments = Department.objects.all()  # Fetch all departments
+    managers = Employee.objects.filter(role__name='Manager').exclude(role__isnull=True)  # Ensure valid role is assigned
+    
+    return render(request, 'Director/assign_manager.html', {'employees': employees, 'departments': departments, 'managers': managers})
