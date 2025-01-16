@@ -238,11 +238,12 @@
         <a href="{% url 'leave_list' %}"><i class="fas fa-calendar-day"></i> Leave</a>
         <a href="{% url 'add_time_sheet' %}"><i class="fas fa-clock"></i> Time Sheet</a>
         <a href="{% url 'claims' %}"><i class="fas fa-file-invoice"></i> Claims</a>
-        <a href="#"><i class="fas fa-users"></i> Manage Team Leads</a>
+        <a href="{% url 'manage_team' %}"><i class="fas fa-users"></i> Manage Team Leads</a>
         <a href="{% url 'approve_leave' %}"><i class="fas fa-check-circle"></i> Approve Leaves</a>
         <a href="#"><i class="fas fa-tasks"></i> Assign Tasks</a>
         <a href="{% url 'manager_approve_timesheet' %}"><i class="fas fa-check-circle"></i> Approve TimeSheet</a>
         <a href="{% url 'manage_assign_projects' %}"><i class="fas fa-check-circle"></i> Assign Projects </a>
+        
 
     {% elif request.user.employee.role.name == "Director" %}
         <a href="{% url 'director_dashboard' %}" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>

@@ -9,7 +9,7 @@ from django.utils import timezone
 from django.template.loader import render_to_string
 from django.db.models import Q
 from datetime import timedelta
-from .models import Employee,WorkFromHome,Leave,BasicInformation,LoginLogoutHistory, Claim,TimeSheet,Role,Department,Project,Holiday,Asset,AssignedDevice,ProjectAssignment
+from .models import Employee,WorkFromHome,Leave,BasicInformation,LoginLogoutHistory, Claim,TimeSheet,Role,Department,Project,Holiday,Asset,AssignedDevice,ProjectAssignment,TeamLead, TeamMember
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.hashers import check_password,make_password
@@ -977,3 +977,87 @@ def assign_manager_view(request):
     managers = Employee.objects.filter(role__name='Manager').exclude(role__isnull=True)  # Ensure valid role is assigned
     
     return render(request, 'Director/assign_manager.html', {'employees': employees, 'departments': departments, 'managers': managers})
+
+def manage_team(request):
+    manager = request.user.employee  # Assuming the logged-in user is linked to an Employee instance
+    if not manager.role.name == "Manager":
+        return redirect('unauthorized')  # Redirect if the user is not a manager
+
+    department = manager.department  # Get the manager's department
+
+    if request.method == "POST":
+        action = request.POST.get('action')
+
+        if action == "assign_team_lead":
+            # Assign a Team Lead
+            employee_id = request.POST.get('employee_id')
+            employee = Employee.objects.get(id=employee_id, department=department)
+            TeamLead.objects.create(employee=employee, department=department)
+
+        elif action == "assign_team_members":
+            # Assign employees to a Team Lead
+            lead_id = request.POST.get('lead_id')
+            employee_ids = request.POST.getlist('employee_ids')
+            lead = TeamLead.objects.get(id=lead_id, department=department)
+
+            for emp_id in employee_ids:
+                employee = Employee.objects.get(id=emp_id, department=department)
+                TeamMember.objects.create(lead=lead, employee=employee)
+
+        elif action == 'assign_under_team_member':
+            # Assign employees under a specific Team Member
+            team_member_id = request.POST.get('team_member_id')
+            employee_ids = request.POST.getlist('employee_ids')
+
+            # Fetch the team member
+            team_member = TeamMember.objects.filter(employee_id=team_member_id).first()
+
+            if not team_member:
+                return redirect('manage_team')  # Handle case where no team member is found
+
+            # Fetch the selected employees to assign
+            selected_employees = Employee.objects.filter(id__in=employee_ids)
+
+            for employee in selected_employees:
+                # Create a new TeamMember instance for the subordinate under the team member
+                TeamMember.objects.create(
+                    parent_team_member=team_member,  # Assign the parent team member
+                    employee=employee,               # The employee being assigned
+                    lead=team_member.lead            # Use the same lead from the parent team member
+                )
+
+            return redirect('manage_team')  # Redirect to the manage team page
+
+    # Fetch all employees in the department
+    employees = Employee.objects.filter(department=department, role__name="Employee")
+    team_leads = TeamLead.objects.filter(department=department)
+
+    # Identify employees who are already assigned as team leads or team members
+    assigned_employee_ids = TeamMember.objects.filter(
+        lead__department=department
+    ).values_list('employee_id', flat=True)
+
+    team_lead_employee_ids = team_leads.values_list('employee_id', flat=True)
+
+    # Mark employees as assigned, team leads, or unassigned
+    employees_with_status = [
+        {
+            "id": employee.id,
+            "name": f"{employee.first_name} {employee.last_name}",
+            "is_assigned": employee.id in assigned_employee_ids,
+            "is_team_lead": employee.id in team_lead_employee_ids,
+        }
+        for employee in employees
+    ]
+
+    # Fetch team members and their subordinates for hierarchy view
+    team_members = TeamMember.objects.filter(lead__department=department)
+
+    context = {
+        'department': department,
+        'team_leads': team_leads,
+        'employees': employees,
+        'employees_with_status': employees_with_status,
+        'team_members': team_members,  # Include team members in the context
+    }
+    return render(request, 'manager/manage_team.html', context)

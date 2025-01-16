@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Team{% endblock %}
+
+{% block content %}
+<div class="manage-team-container">
+    <header class="header">
+        <h1>Manage Team for {{ department.name }} Department</h1>
+    </header>
+
+    <!-- Assign Developer Section -->
+    <section class="card">
+        <h2 class="section-title">Assign Developer</h2>
+        <form method="post" class="form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="assign_team_lead">
+            <label for="employee">Select Employee:</label>
+            <select name="employee_id" id="employee" required>
+                {% for employee in employees %}
+                    <option value="{{ employee.id }}">{{ employee.first_name }} {{ employee.last_name }}</option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn-primary">Assign as Developer</button>
+        </form>
+    </section>
+
+    <!-- Assign Employees to Developer Section -->
+    <section class="card">
+        <h2 class="section-title">Assign Employees to Developer</h2>
+        <form method="post" class="form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="assign_team_members">
+            <label for="lead">Select Developer:</label>
+            <select name="lead_id" id="lead" required>
+                {% for lead in team_leads %}
+                    <option value="{{ lead.id }}">{{ lead.employee.first_name }} {{ lead.employee.last_name }}</option>
+                {% endfor %}
+            </select>
+
+            <label for="employees">Select Employees:</label>
+            <select name="employee_ids" id="employees" multiple required>
+                {% for employee in employees_with_status %}
+                    <option value="{{ employee.id }}" 
+                        {% if employee.is_team_lead or employee.is_assigned %}disabled{% endif %}>
+                        {{ employee.name }}
+                        {% if employee.is_team_lead %}(Team Lead){% endif %}
+                        {% if employee.is_assigned %}(Assigned to Team){% endif %}
+                    </option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn-primary">Assign Employees</button>
+        </form>
+    </section>
+
+    <!-- Current Developers and Team Members Section -->
+    <section class="card">
+        <h2 class="section-title">Current Developers and Members</h2>
+        {% if team_leads %}
+            <table class="styled-table">
+                <thead>
+                    <tr>
+                        <th>Developer</th>
+                        <th>Team Members</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for lead in team_leads %}
+                        <tr>
+                            <td>{{ lead.employee.first_name }} {{ lead.employee.last_name }}</td>
+                            <td>
+                                <ul>
+                                    {% for member in lead.members.all %}
+                                        <li>
+                                            {{ member.employee.first_name }} {{ member.employee.last_name }}
+                                            {% if member.subordinates.all %}
+                                                <ul>
+                                                    {% for subordinate in member.subordinates.all %}
+                                                        <li>{{ subordinate.employee.first_name }} {{ subordinate.employee.last_name }}</li>
+                                                    {% endfor %}
+                                                </ul>
+                                            {% endif %}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No developers or members assigned yet.</p>
+        {% endif %}
+    </section>
+
+    <!-- Assign Employees under a Team Member Section -->
+    <section class="card">
+        <h2 class="section-title">Assign Employees under a Team Member</h2>
+        <form method="post" class="form">
+            {% csrf_token %}
+            <input type="hidden" name="action" value="assign_under_team_member">
+            <label for="team_member">Select Team Member:</label>
+            <select name="team_member_id" id="team_member" required>
+                {% for lead in team_leads %}
+                    <option value="{{ lead.employee.id }}">
+                        {{ lead.employee.first_name }} {{ lead.employee.last_name }} (Developer)
+                    </option>
+                    {% for member in lead.members.all %}
+                        <option value="{{ member.employee.id }}">
+                            {{ member.employee.first_name }} {{ member.employee.last_name }} (Team Member)
+                        </option>
+                    {% endfor %}
+                {% endfor %}
+            </select>
+
+            <label for="employees">Select Employees:</label>
+            <select name="employee_ids" id="employees" multiple required>
+                {% for employee in employees_with_status %}
+                    <option value="{{ employee.id }}" 
+                        {% if employee.is_team_lead or employee.is_assigned %}disabled{% endif %}>
+                        {{ employee.name }}
+                        {% if employee.is_team_lead %}(Team Lead){% endif %}
+                        {% if employee.is_assigned %}(Assigned to Team){% endif %}
+                    </option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn-primary">Assign Employees</button>
+        </form>
+    </section>
+</div>
+
+<!-- External Stylesheet -->
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+<style>
+    /* General Styling */
+    body {
+        font-family: 'Arial', sans-serif;
+        background-color: #f8f9fa;
+        color: #343a40;
+        margin: 0;
+        padding: 20px;
+    }
+
+    .manage-team-container {
+        max-width: 1200px;
+        margin: auto;
+    }
+
+    .header {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .header h1 {
+        color: #007bff;
+        font-size: 2.5rem;
+    }
+
+    .card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+    }
+
+    .section-title {
+        color: #007bff;
+        margin-bottom: 15px;
+    }
+
+    label {
+        display: block;
+        margin: 10px 0 5px;
+    }
+
+    select, button {
+        width: 100%;
+        max-width: 400px;
+        padding: 10px;
+        margin: 10px 0;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+    }
+
+    button.btn-primary {
+        background-color: #007bff;
+        color: white;
+        cursor: pointer;
+        border: none;
+    }
+
+    button.btn-primary:hover {
+        background-color: #0056b3;
+    }
+
+    .styled-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .styled-table th, .styled-table td {
+        padding: 12px;
+        text-align: left;
+        border: 1px solid #ddd;
+    }
+
+    .styled-table th {
+        background-color: #f4f4f4;
+        font-weight: bold;
+    }
+
+    .styled-table tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+</style>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        // Example of interactivity
+        const selects = document.querySelectorAll('select');
+        selects.forEach(select => {
+            select.addEventListener('change', () => {
+                alert(`Selected: ${select.value}`);
+            });
+        });
+    });
+</script>
+{% endblock %}

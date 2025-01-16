@@ -29,6 +29,8 @@ urlpatterns = [
     path('assign-device/', views.assign_device, name='assign_device'),
     path('assign-project/',views.manage_assign_projects, name='manage_assign_projects'),
     path('assign-manager/', views.assign_manager_view, name='assign_manager'),
+    path('manage-team/', views.manage_team, name='manage_team'),
+
 
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

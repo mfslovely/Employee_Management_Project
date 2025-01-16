@@ -121,7 +121,40 @@ class LoginLogoutHistory(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.login_time} to {self.logout_time}"
-    
+
+class TeamLead(models.Model):
+    employee = models.OneToOneField(
+        Employee, 
+        on_delete=models.CASCADE, 
+        related_name='team_lead'
+    )
+    department = models.ForeignKey(
+        Department, 
+        on_delete=models.CASCADE, 
+        related_name='team_leads'
+    )
+
+    def __str__(self):
+        return f"{self.employee.first_name} {self.employee.last_name} - {self.department.name}"
+
+
+class TeamMember(models.Model):
+    lead = models.ForeignKey(
+        TeamLead, 
+        on_delete=models.CASCADE, 
+        related_name='members'
+    )
+    employee = models.ForeignKey(
+        Employee, 
+        on_delete=models.CASCADE, 
+        related_name='team_member'
+    )
+    parent_team_member = models.ForeignKey(
+        'self', null=True, blank=True, on_delete=models.SET_NULL, related_name="subordinates"
+    )
+    def __str__(self):
+        return f"{self.employee.first_name} {self.employee.last_name} under {self.lead.employee.first_name} {self.lead.employee.last_name}"
+
 class LeaveType(models.Model):
     name = models.CharField(max_length=50)
     half_day_type = models.CharField(max_length=20, choices=[('first_half', 'First Half'), ('second_half', 'Second Half')], null=True, blank=True)
