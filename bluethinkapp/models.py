@@ -152,9 +152,7 @@ class TeamMember(models.Model):
     parent_team_member = models.ForeignKey(
         'self', null=True, blank=True, on_delete=models.SET_NULL, related_name="subordinates"
     )
-    def __str__(self):
-        return f"{self.employee.first_name} {self.employee.last_name} under {self.lead.employee.first_name} {self.lead.employee.last_name}"
-
+    
 class LeaveType(models.Model):
     name = models.CharField(max_length=50)
     half_day_type = models.CharField(max_length=20, choices=[('first_half', 'First Half'), ('second_half', 'Second Half')], null=True, blank=True)
@@ -468,5 +466,8 @@ class AssignedDevice(models.Model):
     
     def __str__(self):
         return f"{self.asset.asset_name} assigned to {self.employee.first_name}"
+
+
+
 
 

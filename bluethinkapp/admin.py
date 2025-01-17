@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib import admin
-from .models import Employee, Claim,TimeSheet,Project,Leave
+from .models import Employee, Claim,TimeSheet,Project,Leave ,TeamLead,TeamMember
 @admin.register(Employee)
 class EmployeeAdmin(admin.ModelAdmin):
     list_display = ('id', 'first_name', 'last_name', 'user')
@@ -33,7 +33,16 @@ class LeaveAdmin(admin.ModelAdmin):
     list_display = ('id', 'employee', 'leave_type', 'start_date', 'end_date', 'status', 'reason')
     search_fields = ('employee__first_name', 'employee__last_name', 'leave_type')
     list_filter = ( 'start_date', 'end_date', 'status')
+
+
+@admin.register(TeamLead)
+class TeamLeadAdmin(admin.ModelAdmin):
+    list_display = ('id', 'employee',  'department')
     
+
+@admin.register(TeamMember)
+class TeamMemberAdmin(admin.ModelAdmin):
+    list_display = ('lead', 'employee')
 
 
     
