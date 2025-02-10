@@ -230,6 +230,7 @@
         <a href="{% url 'leave_list' %}"><i class="fas fa-calendar-day"></i> Leave</a>
         <a href="{% url 'add_time_sheet' %}"><i class="fas fa-clock"></i> Time Sheet</a>
         <a href="{% url 'claims' %}"><i class="fas fa-file-invoice"></i> Claims</a>
+        <a href="{% url 'salary_slips' %}"><i class="fas fa-file-invoice"></i> Salary slip</a>
 
     {% elif request.user.employee.role.name == "Manager" %}
         <a href="{% url 'manager_dashboard' %}" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
@@ -243,6 +244,7 @@
         <a href="#"><i class="fas fa-tasks"></i> Assign Tasks</a>
         <a href="{% url 'manager_approve_timesheet' %}"><i class="fas fa-check-circle"></i> Approve TimeSheet</a>
         <a href="{% url 'manage_assign_projects' %}"><i class="fas fa-check-circle"></i> Assign Projects </a>
+        <a href="{% url 'salary_slips' %}"><i class="fas fa-file-invoice"></i> Salary slip</a>
         
 
     {% elif request.user.employee.role.name == "Director" %}
@@ -253,7 +255,15 @@
         <a href="#"><i class="fas fa-chart-line"></i> Strategic Planning</a>
 
     {% elif request.user.employee.role.name == "HR" %}
-        <a href="#"><i class="fas fa-users"></i> Employee List</a>
+        <a href="{% url 'employee_profile' %}"><i class="fas fa-user"></i> My Profile</a>
+        <a href="{% url 'hr_timesheets' %}"><i class="fas fa-user"></i> TimeSheets  </a>
+        <a href="{% url 'manage_employees' %}"><i class="fas fa-user"></i> Employee Profiles </a>
+        <a href="{% url 'leave_list' %}"><i class="fas fa-calendar-day"></i> Leave</a>
+        <a href="{% url 'add_time_sheet' %}"><i class="fas fa-clock"></i> Time Sheet</a>
+        <a href="{% url 'claims' %}"><i class="fas fa-file-invoice"></i> Claims</a>
+        <a href="{% url 'salary_slips' %}"><i class="fas fa-file-invoice"></i> Salary slip</a>
+        <a href="{% url 'Hr_dashboard' %}" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+        <a href="{% url 'Hr_leave_list' %}"><i class="fas fa-users"></i> Employee Leave List</a>
         <a href="#"><i class="fas fa-chalkboard-teacher"></i> Recruitment Dashboard</a>
 
     {% elif request.user.employee.role.name == "Admin" %}

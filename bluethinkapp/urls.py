@@ -3,7 +3,7 @@ from django.urls import path
 from . import views
 from django.conf import settings
 from django.conf.urls.static import static
-from .views import ApplyLeaveView,MangerLeaveView,MangerTimesheetView
+from .views import ApplyLeaveView,MangerLeaveView,MangerTimesheetView,HRLeaveView,HrTimesheetView
 
 
 urlpatterns = [ 
@@ -30,6 +30,12 @@ urlpatterns = [
     path('assign-project/',views.manage_assign_projects, name='manage_assign_projects'),
     path('assign-manager/', views.assign_manager_view, name='assign_manager'),
     path('manage-team/', views.manage_team, name='manage_team'),
+    path('leave-list/', HRLeaveView.as_view(), name='Hr_leave_list'),
+    path('Hr-dashboard/', views.hr_dashboard, name='Hr_dashboard'),
+    path('employees/', views.manage_employees, name='manage_employees'),
+    path('hr/timesheets/', HrTimesheetView.as_view(), name='hr_timesheets'),
+    path('salary-slips/', views.employee_salary_slips, name='salary_slips'),
+    path('download-salary-slip/<int:slip_id>/', views.generate_salary_pdf, name='download_salary_slip'),
 
 
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

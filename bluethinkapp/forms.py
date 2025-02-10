@@ -122,3 +122,9 @@ class HolidayForm(forms.ModelForm):
         widgets = {
             'date': forms.DateInput(attrs={'type': 'date'}),
         }
+
+
+class EmployeeForm(forms.ModelForm):
+    class Meta:
+        model = Employee
+        fields = ['first_name', 'last_name', 'email', 'department', 'date_of_joining']

@@ -149,6 +149,7 @@ CELERY_BROKER_URL = 'redis://localhost:6379/0'  # Use Redis as the message broke
 CELERY_ACCEPT_CONTENT = ['json']
 CELERY_TASK_SERIALIZER = 'json'
 CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'  # Store task results in Redis
+CELERY_TIMEZONE = 'UTC'
 
 
 
@@ -170,4 +171,11 @@ CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'  # Store task results in Redi
 MEDIA_URL = '/media/'  # URL to access media files in development
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')  # Directory to store uploaded files
 
-
+from celery.schedules import crontab
+# Celery Beat configuration
+CELERY_BEAT_SCHEDULE = {
+    'generate-salary-slips': {
+        'task': 'bluethinkapp.tasks.generate_monthly_salary_slips',
+        'schedule': crontab(minute=0, hour=0, day_of_month='1', month_of_year='*'),  # Runs at midnight on the 1st of every month
+    },
+}

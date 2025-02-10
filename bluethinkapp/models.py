@@ -8,6 +8,7 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from django.utils.timezone import now
 
+from datetime import date 
 
 class Role(models.Model):
     name = models.CharField(max_length=50, unique=True)
@@ -113,6 +114,35 @@ class Employee(models.Model):
     )
     department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, related_name='employees') 
     position = models.ForeignKey(Designation, on_delete=models.SET_NULL, null=True, related_name='employees') 
+    salary = models.DecimalField(max_digits=10, decimal_places=2,null=True, blank=True)  # Monthly Salary
+    per_day_salary = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    
+    def save(self, *args, **kwargs):
+        self.per_day_salary = self.salary / 30  # Assuming 30 days in a month
+        super().save(*args, **kwargs)
+
+class SalarySlip(models.Model):
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
+    month = models.CharField(max_length=20)  # e.g., "January 2025"
+    base_salary = models.DecimalField(max_digits=10, decimal_places=2)
+    present_days = models.IntegerField()
+    absent_days = models.IntegerField()
+    deductions = models.DecimalField(max_digits=10, decimal_places=2)
+    net_salary = models.DecimalField(max_digits=10, decimal_places=2)
+    generated_on = models.DateField(default=date.today)
+
+    def __str__(self):
+        return f"Salary Slip for {self.employee.first_name} - {self.month}"
+class Attendance(models.Model):
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
+    date = models.DateField()
+    status = models.CharField(max_length=20)
+    check_in = models.TimeField()
+    check_out = models.TimeField()
+    work_mode = models.CharField(max_length=20)
+
+    def __str__(self):  
+        return f"{self.employee.first_name} {self.employee.last_name} - {self.date}"
 
 class LoginLogoutHistory(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -422,16 +452,6 @@ class WorkFromHome(models.Model):
     def __str__(self):
         return f"{self.employee.first_name} {self.employee.last_name} - WFH on {self.wfh_date}"
     
-class Attendance(models.Model):
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
-    date = models.DateField()
-    status = models.CharField(max_length=20)
-    check_in = models.TimeField()
-    check_out = models.TimeField()
-    work_mode = models.CharField(max_length=20)
-
-    def __str__(self):  
-        return f"{self.employee.first_name} {self.employee.last_name} - {self.date}"
 
 class Asset(models.Model):
     CATEGORY_CHOICES = [

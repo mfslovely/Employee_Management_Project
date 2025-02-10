@@ -17,7 +17,7 @@
             <label for="employee">Select Employee:</label>
             <select name="employee_id" id="employee" required>
                 {% for employee in employees %}
-                    <option value="{{ employee.id }}">{{ employee.first_name }} {{ employee.last_name }}</option>
+                    <option value="{{ employee.id}}">{{ employee.first_name }} {{ employee.last_name }}</option>
                 {% endfor %}
             </select>
             <button type="submit" class="btn-primary">Assign as Developer</button>
@@ -214,16 +214,10 @@
         background-color: #f9f9f9;
     }
 </style>
-
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        // Example of interactivity
-        const selects = document.querySelectorAll('select');
-        selects.forEach(select => {
-            select.addEventListener('change', () => {
-                alert(`Selected: ${select.value}`);
-            });
-        });
-    });
-</script>
 {% endblock %}
+
+
+
+
+
+

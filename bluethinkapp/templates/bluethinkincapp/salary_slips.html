@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center text-primary mb-4">My Salary Slips</h2>
+
+    {% if no_slip_message %}
+        <div class="alert alert-info text-center">
+            {{ no_slip_message }}
+        </div>
+    {% else %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-hover">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Month</th>
+                        <th>Base Salary</th>
+                        <th>Present Days</th>
+                        <th>Absent Days</th>
+                        <th>Deductions</th>
+                        <th>Net Salary</th>
+                        <th>Download</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for slip in slips %}
+                    <tr>
+                        <td>{{ slip.month }}</td>
+                        <td>{{ slip.base_salary }}</td>
+                        <td>{{ slip.present_days }}</td>
+                        <td>{{ slip.absent_days }}</td>
+                        <td>{{ slip.deductions }}</td>
+                        <td>{{ slip.net_salary }}</td>
+                        <td>
+                            <a href="{% url 'download_salary_slip' slip.id %}" class="btn btn-primary btn-sm">
+                                Download PDF
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

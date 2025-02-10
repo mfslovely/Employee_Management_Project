@@ -22,7 +22,7 @@ from .forms import (
     EducationDetailsForm,
     CommunicationDetailsForm,
     DocumentSectionForm,
-    PreviousEmploymentDetailsForm,ClaimForm,ApplyLeaveForm,TimeSheetForm,ProjectForm,HolidayForm,ProjectAssignmentForm
+    PreviousEmploymentDetailsForm,ClaimForm,ApplyLeaveForm,TimeSheetForm,ProjectForm,HolidayForm,ProjectAssignmentForm,EmployeeForm
 )
 from django.views import View
 from .tasks import check_login_and_notify 
@@ -44,6 +44,9 @@ from .forms import ApplyLeaveForm
 from .models import Leave, Employee
 from django.core.mail import send_mail
 from datetime import date
+from django.http import HttpResponse
+from reportlab.pdfgen import canvas
+from .models import SalarySlip
 
 
 
@@ -122,7 +125,39 @@ def director_dashboard(request):
     return render(request, 'Director/director_dashboard.html')
 
 def hr_dashboard(request):
-    return render(request, 'hr_dashboard.html')
+    today = timezone.now().date()
+    next_month = today + timedelta(days=30)
+
+    upcoming_birthdays = BasicInformation.objects.filter(
+        date_of_birth__month=today.month, 
+        date_of_birth__day__gte=today.day, 
+        date_of_birth__day__lte=next_month.day
+    )
+    upcoming_anniversaries = BasicInformation.objects.filter(
+        date_of_joining__month=today.month, 
+        date_of_joining__day__gte=today.day, 
+        date_of_joining__day__lte=next_month.day
+    )
+    employees_on_leave = Leave.objects.filter(
+        start_date__lte=today, 
+        end_date__gte=today
+    )
+
+    employees_working_from_home = WorkFromHome.objects.all()
+    assigned_assets = Asset.objects.filter(owned_by__isnull=False)
+    
+
+    # Get the assigned devices for the manager's dashboard
+    assigned_devices = AssignedDevice.objects.select_related('asset', 'employee').all()
+    context = {
+        'upcoming_birthdays': upcoming_birthdays,
+        'upcoming_anniversaries': upcoming_anniversaries,
+        'employee_on_leave': employees_on_leave,
+        'employee_working_from_home': employees_working_from_home,
+        'assigned_assets': assigned_assets,
+        'assigned_devices': assigned_devices,
+    }
+    return render(request, 'HR/hr_dashboard.html',context)
 
 def admin_dashboard(request):
     today = timezone.now().date()
@@ -650,6 +685,57 @@ class MangerLeaveView(View):
             # If no leave request found with the given ID, return a 404 error
             return HttpResponse("Leave request does not exist.", status=404)
 
+@method_decorator(login_required, name='dispatch')
+class MangerLeaveView(View):
+    def get(self, request):
+        # Get the manager's details
+        employee = request.user.employee
+        search_query = request.GET.get('first_name', '').strip()
+        leave_requests_pending = Leave.objects.filter(approved_by=employee, status='pending')
+        leave_requests_approved = Leave.objects.filter(approved_by=employee, status='approved')
+        leave_requests_rejected = Leave.objects.filter(approved_by=employee, status='rejected')
+
+        if search_query:
+            filter_query = Q(employee__first_name__icontains=search_query) | Q(employee__last_name__icontains=search_query)
+            leave_requests_pending = leave_requests_pending.filter(filter_query)
+            leave_requests_approved = leave_requests_approved.filter(filter_query)
+            leave_requests_rejected = leave_requests_rejected.filter(filter_query)
+
+        # Pass these requests to the template context
+        context = {
+            'leave_requests_pending': leave_requests_pending,
+            'leave_requests_approved': leave_requests_approved,
+            'leave_requests_rejected': leave_requests_rejected,
+            'search_query': search_query
+        }
+
+        # Render the page with leave requests
+        return render(request, 'manager/approve_leave.html', context)
+
+    def post(self, request):
+        leave_id = request.POST.get('leave_id')
+        action = request.POST.get('action')
+
+        try:
+           
+            leave = Leave.objects.get(id=leave_id, approved_by=request.user.employee)
+
+            # Check the action and update the leave status accordingly
+            if action == 'approve':
+                leave.status = 'approved'
+            elif action == 'reject':
+                leave.status = 'rejected'
+
+            # Save the updated leave request
+            leave.save()
+
+            # Redirect to the same page to refresh the leave requests
+            return redirect('approve_leave')
+
+        except Leave.DoesNotExist:
+            # If no leave request found with the given ID, return a 404 error
+            return HttpResponse("Leave request does not exist.", status=404)
+
 
 class MangerTimesheetView(View):
     def get(self, request):
@@ -1041,6 +1127,7 @@ def manage_team(request):
 
     # Mark employees as assigned, team leads, or unassigned
     employees_with_status = [
+
         {
             "id": employee.id,
             "name": f"{employee.first_name} {employee.last_name}",
@@ -1061,3 +1148,139 @@ def manage_team(request):
         'team_members': team_members,  # Include team members in the context
     }
     return render(request, 'manager/manage_team.html', context)
+
+
+@method_decorator(login_required, name='dispatch')
+class HRLeaveView(View):
+    def get(self, request):
+        # Search query to filter leaves by employee name
+        search_query = request.GET.get('first_name', '').strip()
+
+        # Fetch all leave requests for all employees
+        leave_requests = Leave.objects.all()
+
+        if search_query:
+            # Filter by employee's first name or last name
+            filter_query = Q(employee__first_name__icontains=search_query) | Q(employee__last_name__icontains=search_query)
+            leave_requests = leave_requests.filter(filter_query)
+
+        # Separate leave requests by status
+        leave_requests_pending = leave_requests.filter(status='pending')
+        leave_requests_approved = leave_requests.filter(status='approved')
+        leave_requests_rejected = leave_requests.filter(status='rejected')
+
+        # Pass the filtered data to the template context
+        context = {
+            'leave_requests_pending': leave_requests_pending,
+            'leave_requests_approved': leave_requests_approved,
+            'leave_requests_rejected': leave_requests_rejected,
+            'search_query': search_query
+        }
+
+        # Render the HR leave list template
+        return render(request, 'HR/Hr_leave_list.html', context)
+
+
+
+
+
+
+
+
+def manage_employees(request):
+    # Fetch all employees for listing
+    employees = Employee.objects.all()
+
+    # Determine if editing or adding based on `pk` parameter
+    pk = request.GET.get('pk')  # `pk` parameter from query string
+    if pk:
+        # Editing an existing employee
+        employee = get_object_or_404(Employee, pk=pk)
+        form = EmployeeForm(request.POST or None, instance=employee)
+        action = "Edit Employee"
+    else:
+        # Adding a new employee
+        employee = None
+        form = EmployeeForm(request.POST or None)
+        action = "Add Employee"
+
+    if request.method == 'POST':
+        if form.is_valid():
+            form.save()
+            return redirect('manage_employees')
+
+    return render(request, 'HR/manage_employees.html', {
+        'employees': employees,
+        'form': form,
+        'action': action,
+        'employee': employee
+    })
+
+
+class HrTimesheetView(View):
+    def get(self, request):
+        employee_name = request.GET.get('first_name')
+        month = request.GET.get('month')
+        timesheets = TimeSheet.objects.all()
+
+        if employee_name:
+            timesheets = timesheets.filter(employee__first_name__icontains=employee_name)
+
+        today = date.today()
+
+        if month == "current":
+            start_of_month = today.replace(day=1)
+            timesheets = timesheets.filter(date__gte=start_of_month)
+
+        elif month == "previous":
+            first_of_current_month = today.replace(day=1)
+            last_month_end = first_of_current_month - timedelta(days=1)
+            start_of_last_month = last_month_end.replace(day=1)
+            timesheets = timesheets.filter(date__range=(start_of_last_month, last_month_end))
+
+        return render(request, 'HR/manage_timesheet.html', {'timesheets': timesheets})
+
+
+def generate_salary_pdf(request, slip_id):
+    slip = SalarySlip.objects.get(id=slip_id)
+
+    response = HttpResponse(content_type='application/pdf')
+    response['Content-Disposition'] = f'attachment; filename="SalarySlip_{slip.employee.first_name}_{slip.month}.pdf"'
+
+    p = canvas.Canvas(response)
+    p.setFont("Helvetica-Bold", 16)
+    p.drawString(200, 800, "Salary Slip")
+
+    p.setFont("Helvetica", 12)
+    p.drawString(50, 770, f"Employee Name: {slip.employee.first_name} {slip.employee.last_name}")
+    p.drawString(50, 750, f"Month: {slip.month}")
+    p.drawString(50, 730, f"Base Salary: {slip.base_salary}")
+    p.drawString(50, 710, f"Present Days: {slip.present_days}")
+    p.drawString(50, 690, f"Absent Days: {slip.absent_days}")
+    p.drawString(50, 670, f"Deductions: {slip.deductions}")
+    p.drawString(50, 650, f"Net Salary: {slip.net_salary}")
+
+    p.showPage()
+    p.save()
+    return response
+
+
+def employee_salary_slips(request):
+    employee = request.user.employee  # Get the logged-in employee
+    current_month = date.today().strftime('%B %Y')
+    
+    slips = SalarySlip.objects.filter(employee=employee)  # Get the current month and year (e.g., January 2025)
+    
+    # Check if salary slip for the current month already exists
+    try:
+        salary_slip = SalarySlip.objects.get(employee=employee, month=current_month)
+    except SalarySlip.DoesNotExist:
+        salary_slip = None  # No salary slip generated yet
+
+    if salary_slip:
+        context = {'slips': [salary_slip]}  # If salary slip exists, show it
+    else:
+        context = {'no_slip_message': f"Salary slip for {current_month} will be available soon after the month ends."}
+  
+    return render(request, 'bluethinkincapp/salary_slips.html', {'slips': slips})
+
