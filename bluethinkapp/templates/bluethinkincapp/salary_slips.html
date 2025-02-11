@@ -5,20 +5,23 @@
     <h2 class="text-center text-primary mb-4">My Salary Slips</h2>
 
     {% if no_slip_message %}
-        <div class="alert alert-info text-center">
-            {{ no_slip_message }}
+        <div class="alert alert-warning text-center">
+            <strong>{{ no_slip_message }}</strong>
         </div>
     {% else %}
         <div class="table-responsive">
-            <table class="table table-bordered table-hover">
+            <table class="table table-striped table-bordered text-center">
                 <thead class="table-dark">
                     <tr>
                         <th>Month</th>
-                        <th>Base Salary</th>
+                        <th>Year</th>
+                        <th>Base Salary (₹)</th>
                         <th>Present Days</th>
                         <th>Absent Days</th>
-                        <th>Deductions</th>
-                        <th>Net Salary</th>
+                        <th>Leave Days</th>
+                        <th>Deductions (₹)</th>
+                        <th>Net Salary (₹)</th>
+                        <th>Generated On</th>
                         <th>Download</th>
                     </tr>
                 </thead>
@@ -26,14 +29,17 @@
                     {% for slip in slips %}
                     <tr>
                         <td>{{ slip.month }}</td>
-                        <td>{{ slip.base_salary }}</td>
+                        <td>{{ slip.year }}</td>
+                        <td>₹{{ slip.base_salary }}</td>
                         <td>{{ slip.present_days }}</td>
                         <td>{{ slip.absent_days }}</td>
-                        <td>{{ slip.deductions }}</td>
-                        <td>{{ slip.net_salary }}</td>
+                        <td>{{ slip.leave_days }}</td>
+                        <td>₹{{ slip.deductions }}</td>
+                        <td><strong class="text-success">₹{{ slip.net_salary }}</strong></td>
+                        <td>{{ slip.generated_on|date:"d M Y" }}</td>
                         <td>
-                            <a href="{% url 'download_salary_slip' slip.id %}" class="btn btn-primary btn-sm">
-                                Download PDF
+                            <a href="{% url 'download_salary_slip' slip.id %}" class="btn btn-outline-primary btn-sm">
+                                <i class="fa fa-file-pdf"></i> PDF
                             </a>
                         </td>
                     </tr>
@@ -42,5 +48,23 @@
             </table>
         </div>
     {% endif %}
+
+    {% if salary_slip %}
+    <div class="card mt-5 shadow">
+        <div class="card-header bg-primary text-white text-center">
+            <h4>Salary Slip for {{ salary_slip.employee.first_name }} {{ salary_slip.employee.last_name }}</h4>
+        </div>
+        <div class="card-body">
+            <p><strong>Month:</strong> {{ salary_slip.month }}/{{ salary_slip.year }}</p>
+            <p><strong>Present Days:</strong> {{ salary_slip.total_present_days }}</p>
+            <p><strong>Absent Days:</strong> {{ salary_slip.total_absent_days }}</p>
+            <p><strong>Leave Days:</strong> {{ salary_slip.total_leave_days }}</p>
+            <p><strong>Base Salary:</strong> ₹{{ salary_slip.base_salary }}</p>
+            <p><strong>Deductions:</strong> ₹{{ salary_slip.deductions }}</p>
+            <p><strong>Net Salary:</strong> <span class="text-success">₹{{ salary_slip.total_salary }}</span></p>
+        </div>
+    </div>
+    {% endif %}
+
 </div>
 {% endblock %}

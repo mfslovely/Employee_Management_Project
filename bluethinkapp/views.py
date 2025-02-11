@@ -1242,26 +1242,14 @@ class HrTimesheetView(View):
 
 
 def generate_salary_pdf(request, slip_id):
-    slip = SalarySlip.objects.get(id=slip_id)
+    salary_slip = SalarySlip.objects.get(id=slip_id)
+    template = get_template('salary_slip_template.html')
+    html = template.render({'salary_slip': salary_slip})
 
     response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="SalarySlip_{slip.employee.first_name}_{slip.month}.pdf"'
-
-    p = canvas.Canvas(response)
-    p.setFont("Helvetica-Bold", 16)
-    p.drawString(200, 800, "Salary Slip")
-
-    p.setFont("Helvetica", 12)
-    p.drawString(50, 770, f"Employee Name: {slip.employee.first_name} {slip.employee.last_name}")
-    p.drawString(50, 750, f"Month: {slip.month}")
-    p.drawString(50, 730, f"Base Salary: {slip.base_salary}")
-    p.drawString(50, 710, f"Present Days: {slip.present_days}")
-    p.drawString(50, 690, f"Absent Days: {slip.absent_days}")
-    p.drawString(50, 670, f"Deductions: {slip.deductions}")
-    p.drawString(50, 650, f"Net Salary: {slip.net_salary}")
-
-    p.showPage()
-    p.save()
+    response['Content-Disposition'] = f'attachment; filename="salary_slip_{salary_slip.month}_{salary_slip.year}.pdf"'
+    
+    pisa.CreatePDF(html, dest=response)
     return response
 
 

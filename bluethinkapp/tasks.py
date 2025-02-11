@@ -42,44 +42,19 @@ def check_login_and_notify(user_id):
         print(f"Employee with user ID {user_id} does not exist.")
 
 
-# your_app/tasks.py
-
 from celery import shared_task
-from django.utils import timezone
-from .models import Employee, SalarySlip
-from datetime import timedelta
+from datetime import date
+from .models import Employee
+from .utils import calculate_salary
 
 @shared_task
 def generate_monthly_salary_slips():
-    today = timezone.now()
-    # Get the first day of the current month
-    first_day_of_month = today.replace(day=1)
-    
-    # Generate salary slips for each employee
+    today = date.today()
+    month = today.month - 1 if today.month > 1 else 12  # Previous month
+    year = today.year if today.month > 1 else today.year - 1
+
     employees = Employee.objects.all()
-    
     for employee in employees:
-        # Retrieve timesheet data for this month for each employee
-        timesheet = employee.timesheet_set.filter(date__gte=first_day_of_month)
-        
-        # Calculate the salary based on attendance (e.g. present days, absent days)
-        present_days = timesheet.filter(status="Present").count()
-        absent_days = timesheet.filter(status="Absent").count()
+        calculate_salary(employee, month, year)
 
-        # Your salary calculation logic (you can modify this based on your actual business rules)
-        total_salary = employee.salary  # Base salary
-        salary_deduction = (absent_days * (employee.salary / 30))  # Assuming 30 days in a month
-        total_salary -= salary_deduction
-        
-        # Create salary slip
-        SalarySlip.objects.create(
-            employee=employee,
-            month=today.strftime('%B %Y'),
-            total_salary=total_salary,
-            generated_on=timezone.now()
-        )
-    return 'Salary slips generated successfully.'
-
-
-
-
+    return f"Salary slips generated for {month}/{year}"
