@@ -128,3 +128,15 @@ class EmployeeForm(forms.ModelForm):
     class Meta:
         model = Employee
         fields = ['first_name', 'last_name', 'email', 'department', 'date_of_joining']
+
+
+class EmployeeSalaryForm(forms.ModelForm):
+    class Meta:
+        model = Employee
+        fields = ['salary']
+
+    def clean_salary(self):
+        salary = self.cleaned_data.get('salary')
+        if salary is None or salary <= 0:
+            raise forms.ValidationError('Salary must be a positive number.')
+        return salary

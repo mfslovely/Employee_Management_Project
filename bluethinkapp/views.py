@@ -22,6 +22,7 @@ from .forms import (
     EducationDetailsForm,
     CommunicationDetailsForm,
     DocumentSectionForm,
+    EmployeeSalaryForm,
     PreviousEmploymentDetailsForm,ClaimForm,ApplyLeaveForm,TimeSheetForm,ProjectForm,HolidayForm,ProjectAssignmentForm,EmployeeForm
 )
 from django.views import View
@@ -1272,3 +1273,30 @@ def employee_salary_slips(request):
   
     return render(request, 'bluethinkincapp/salary_slips.html', {'slips': slips})
 
+
+@login_required
+def manage_salaries(request):
+    # Get all employees
+    employees = Employee.objects.all()
+
+    if request.method == "POST":
+        # Loop through each employee to update their salary
+        for employee in employees:
+            salary_key = f"salary_{employee.id}"  # Get the dynamic field name
+            new_salary = request.POST.get(salary_key)  # Get the new salary from the POST data
+
+            if new_salary:
+                try:
+                    new_salary = float(new_salary)  # Convert the new salary to float
+
+                    # Update the employee's salary
+                    employee.salary = new_salary
+                    employee.save()
+
+                except ValueError:
+                    # Handle the case where the salary is not a valid number
+                    print(f"Invalid salary value for {employee.first_name} {employee.last_name}")
+                    
+        return redirect('manage_salaries')  # Redirect to the same page after updating
+
+    return render(request, 'bluethinkincapp/manage_salaries.html', {'employees': employees})

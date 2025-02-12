@@ -43,18 +43,61 @@ def check_login_and_notify(user_id):
 
 
 from celery import shared_task
+from django.utils.timezone import now
 from datetime import date
-from .models import Employee
-from .utils import calculate_salary
+from dateutil.relativedelta import relativedelta
+from bluethinkapp.models import Employee, SalarySlip, TimeSheet, Leave  
 
 @shared_task
-def generate_monthly_salary_slips():
+def generate_salary_slips():
     today = date.today()
-    month = today.month - 1 if today.month > 1 else 12  # Previous month
-    year = today.year if today.month > 1 else today.year - 1
+    
+    # Get the previous month and adjust the year if needed
+    previous_month = today - relativedelta(months=1)
+    month = previous_month.month
+    year = previous_month.year
 
     employees = Employee.objects.all()
-    for employee in employees:
-        calculate_salary(employee, month, year)
 
-    return f"Salary slips generated for {month}/{year}"
+    for employee in employees:
+        if employee.salary is None:
+            continue  # Skip employees with no salary set
+
+        # Fetch records for the previous month
+        timesheets = TimeSheet.objects.filter(employee=employee, date__month=month, date__year=year)
+        leaves = Leave.objects.filter(employee=employee, start_date__month=month, start_date__year=year)
+
+        # Count present and absent days based on status
+        present_days = timesheets.filter(status="Approved").count()  # Ensure correct capitalization
+        absent_days = timesheets.filter(status="Rejected").count()
+
+        # Calculate total leave days
+        leave_days = sum((leave.end_date - leave.start_date).days + 1 for leave in leaves if leave.status == "Approved")
+
+        # Salary calculations
+        base_salary = float(employee.salary)  # Convert to float to avoid TypeErrors
+        per_day_salary = base_salary / 30  # Assume 30 days per month
+        deductions = absent_days * per_day_salary
+        total_salary = base_salary - deductions  # Deduct absent days
+
+        # Ensure values are not negative
+        total_salary = max(total_salary, 0)
+
+        # Create or update salary slip
+        SalarySlip.objects.update_or_create(
+            employee=employee,
+            month=str(month),
+            year=year,
+            defaults={
+                'basic_salary': employee.base_salary,  # ✅ Match Employee model field
+                'hra': employee.base_salary * 0.2,  # ✅ Example HRA calculation
+                'deductions': absent_days * employee.salary_per_day,  # ✅ Use correct field
+                'net_salary': employee.base_salary - (absent_days * employee.salary_per_day),  
+                'total_present_days': present_days,
+                'total_absent_days': absent_days,
+                'total_leave_days': leave_days,
+                'total_salary': employee.base_salary - (absent_days * employee.salary_per_day)
+            }
+        )
+    
+    return "Salary slips generated successfully!"

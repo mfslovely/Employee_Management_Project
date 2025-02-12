@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="text-center text-primary mb-4">Manage Employee Salaries</h2>
+
+    <form method="POST">
+        {% csrf_token %}
+        <table class="table table-bordered">
+            <thead class="table-dark">
+                <tr>
+                    <th>Name</th>
+                    <th>Current Salary</th>
+                    <th>Enter New Salary</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for employee in employees %}
+                <tr>
+                    <td>{{ employee.first_name }} {{ employee.last_name }}</td>
+                    <td>₹{{ employee.salary }}</td>
+                    <td>
+                        <input type="number" name="salary_{{ employee.id }}" value="{{ employee.salary }}" class="form-control" step="0.01" placeholder="Enter salary">
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <button type="submit" class="btn btn-primary">Update Salaries</button>
+    </form>
+</div>
+{% endblock %}

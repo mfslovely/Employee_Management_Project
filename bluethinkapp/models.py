@@ -116,23 +116,36 @@ class Employee(models.Model):
     position = models.ForeignKey(Designation, on_delete=models.SET_NULL, null=True, related_name='employees') 
     salary = models.DecimalField(max_digits=10, decimal_places=2,null=True, blank=True)  # Monthly Salary
     salary_per_day = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    base_salary = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    
     
     def save(self, *args, **kwargs):
-        self.per_day_salary = self.salary / 30  # Assuming 30 days in a month
+        if self.salary is not None:
+            self.base_salary = self.salary  # If salary is set, base_salary = salary
+            self.salary_per_day = self.salary / 30  # Assuming 30 days in a month
+        else:
+            self.salary_per_day = 0  # Default if salary is not set
         super().save(*args, **kwargs)
 
 class SalarySlip(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
-    month = models.IntegerField()  # Store month (1-12)
-    year = models.IntegerField()  # Store year (YYYY)
-    total_present_days = models.IntegerField(default=0)
+    month = models.CharField(max_length=10)  # CharField, since your existing model has it
+    year = models.IntegerField()
+    basic_salary = models.DecimalField(max_digits=10, decimal_places=2)
+    hra = models.DecimalField(max_digits=10, decimal_places=2)
+    deductions = models.DecimalField(max_digits=10, decimal_places=2)
+    net_salary = models.DecimalField(max_digits=10, decimal_places=2)
+
+    # ✅ Add missing fields
+    total_present_days= models.IntegerField(default=0)
     total_absent_days = models.IntegerField(default=0)
     total_leave_days = models.IntegerField(default=0)
     total_salary = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
-    generated_on = models.DateField(auto_now_add=True)
 
     def __str__(self):
-        return f"Salary Slip - {self.employee.first_name} {self.employee.last_name} ({self.month}/{self.year})"
+        return f"{self.employee} - {self.month}/{self.year}"
+
+
 class Attendance(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
     date = models.DateField()
@@ -343,17 +356,6 @@ class PreviousEmploymentDetails(models.Model):
     reference_role = models.CharField(max_length=100)
 
 
-class SalarySlip(models.Model):
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
-    month = models.CharField(max_length=20)
-    year = models.IntegerField()
-    basic_salary = models.DecimalField(max_digits=10, decimal_places=2)
-    hra = models.DecimalField(max_digits=10, decimal_places=2)
-    deductions = models.DecimalField(max_digits=10, decimal_places=2)
-    net_salary = models.DecimalField(max_digits=10, decimal_places=2)
-
-    def __str__(self):
-        return f"{self.employee} - {self.month}/{self.year}"
 
 class HRPolicy(models.Model):
     policy_type = models.CharField(max_length=100)
@@ -427,18 +429,7 @@ class TimeSheet(models.Model):
     comment = models.TextField(null=True, blank=True)
     acknowledgment = models.BooleanField(default=False)
 
-    def __str__(self):
-        project_name = self.custom_project_name if self.custom_project_name else self.assigned_project.project_name
-        employee_name = self.employee.user.username if hasattr(self.employee, 'user') else "Unknown Employee"
-        return f"{employee_name} - {project_name}"
-
-class Training(models.Model):
-    timesheet  = models.OneToOneField(TimeSheet, on_delete=models.CASCADE)
-    employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
-    training_name = models.CharField(max_length=100)
-    start_date = models.DateField()
-    end_date = models.DateField()
-    status = models.CharField(max_length=20)
+    
 
 class WorkFromHome(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name='wfh_status')

@@ -36,6 +36,7 @@ urlpatterns = [
     path('hr/timesheets/', HrTimesheetView.as_view(), name='hr_timesheets'),
     path('salary-slips/', views.employee_salary_slips, name='salary_slips'),
     path('download-salary-slip/<int:slip_id>/', views.generate_salary_pdf, name='download_salary_slip'),
+    path('manage_salaries/', views.manage_salaries, name='manage_salaries'),
 
 
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
