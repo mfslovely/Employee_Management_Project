@@ -11,7 +11,9 @@
                 <tr>
                     <th>Name</th>
                     <th>Current Salary</th>
+                    <th>Base Salary </th>
                     <th>Enter New Salary</th>
+                    <th>Enter New Base Salary</th>  <!-- Added field for base_salary -->
                 </tr>
             </thead>
             <tbody>
@@ -19,9 +21,13 @@
                 <tr>
                     <td>{{ employee.first_name }} {{ employee.last_name }}</td>
                     <td>₹{{ employee.salary }}</td>
+                    <td>₹{{ employee.base_salary}}</td>
                     <td>
                         <input type="number" name="salary_{{ employee.id }}" value="{{ employee.salary }}" class="form-control" step="0.01" placeholder="Enter salary">
                     </td>
+                    <td>
+                        <input type="number" name="base_salary_{{ employee.id }}" value="{{ employee.base_salary }}" class="form-control" step="0.01" placeholder="Enter base salary">
+                    </td>  <!-- Added input field for base_salary -->
                 </tr>
                 {% endfor %}
             </tbody>

@@ -1,11 +1,13 @@
 from django.shortcuts import render,redirect
 import json
+from django.template.loader import get_template
 from django.utils.timezone import now
 from django.db.models import Sum
 from django.db.models import Sum, F, ExpressionWrapper, IntegerField
 from django.contrib.auth.models import User
 from django.conf import settings
 from django.utils import timezone
+from xhtml2pdf import pisa
 from django.template.loader import render_to_string
 from django.db.models import Q
 from datetime import timedelta
@@ -1244,7 +1246,7 @@ class HrTimesheetView(View):
 
 def generate_salary_pdf(request, slip_id):
     salary_slip = SalarySlip.objects.get(id=slip_id)
-    template = get_template('salary_slip_template.html')
+    template = get_template('bluethinkincapp/salary_slips.html')
     html = template.render({'salary_slip': salary_slip})
 
     response = HttpResponse(content_type='application/pdf')
@@ -1274,16 +1276,20 @@ def employee_salary_slips(request):
     return render(request, 'bluethinkincapp/salary_slips.html', {'slips': slips})
 
 
+
+
 @login_required
 def manage_salaries(request):
     # Get all employees
     employees = Employee.objects.all()
 
     if request.method == "POST":
-        # Loop through each employee to update their salary
+        # Loop through each employee to update their salary and base salary
         for employee in employees:
-            salary_key = f"salary_{employee.id}"  # Get the dynamic field name
+            salary_key = f"salary_{employee.id}"  # Get the dynamic field name for salary
+            base_salary_key = f"base_salary_{employee.id}"  # Get the dynamic field name for base_salary
             new_salary = request.POST.get(salary_key)  # Get the new salary from the POST data
+            new_base_salary = request.POST.get(base_salary_key)  # Get the new base salary from the POST data
 
             if new_salary:
                 try:
@@ -1291,12 +1297,24 @@ def manage_salaries(request):
 
                     # Update the employee's salary
                     employee.salary = new_salary
-                    employee.save()
 
                 except ValueError:
                     # Handle the case where the salary is not a valid number
                     print(f"Invalid salary value for {employee.first_name} {employee.last_name}")
                     
+            if new_base_salary:
+                try:
+                    new_base_salary = float(new_base_salary)  # Convert the new base salary to float
+
+                    # Update the employee's base salary
+                    employee.base_salary = new_base_salary
+
+                except ValueError:
+                    # Handle the case where the base salary is not a valid number
+                    print(f"Invalid base salary value for {employee.first_name} {employee.last_name}")
+
+            employee.save()  # Save the updated employee data
+
         return redirect('manage_salaries')  # Redirect to the same page after updating
 
     return render(request, 'bluethinkincapp/manage_salaries.html', {'employees': employees})

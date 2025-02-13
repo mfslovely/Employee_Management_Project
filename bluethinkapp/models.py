@@ -7,6 +7,7 @@ from django.contrib.auth.models import AbstractUser
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.utils.timezone import now
+from decimal import Decimal
 
 from datetime import date 
 
@@ -114,38 +115,39 @@ class Employee(models.Model):
     )
     department = models.ForeignKey(Department, on_delete=models.SET_NULL, null=True, related_name='employees') 
     position = models.ForeignKey(Designation, on_delete=models.SET_NULL, null=True, related_name='employees') 
-    salary = models.DecimalField(max_digits=10, decimal_places=2,null=True, blank=True)  # Monthly Salary
+    salary = models.DecimalField(max_digits=10, decimal_places=2,null=True, blank=True,default=Decimal("0.00"))  # Monthly Salary
     salary_per_day = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     base_salary = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     
     
     def save(self, *args, **kwargs):
         if self.salary is not None:
-            self.base_salary = self.salary  # If salary is set, base_salary = salary
-            self.salary_per_day = self.salary / 30  # Assuming 30 days in a month
+            self.salary_per_day = self.salary / 30  # Calculate daily salary
         else:
-            self.salary_per_day = 0  # Default if salary is not set
+            self.salary_per_day = Decimal("0.00")
+        
+        if self.base_salary is None:  # Ensure base_salary is never None
+            self.base_salary = Decimal("0.00")
+            
         super().save(*args, **kwargs)
 
 class SalarySlip(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
-    month = models.CharField(max_length=10)  # CharField, since your existing model has it
+    month = models.CharField(max_length=10)
     year = models.IntegerField()
-    basic_salary = models.DecimalField(max_digits=10, decimal_places=2)
-    hra = models.DecimalField(max_digits=10, decimal_places=2)
-    deductions = models.DecimalField(max_digits=10, decimal_places=2)
-    net_salary = models.DecimalField(max_digits=10, decimal_places=2)
+    basic_salary = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    hra = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    deductions = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
+    net_salary = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
 
-    # ✅ Add missing fields
-    total_present_days= models.IntegerField(default=0)
+    total_present_days = models.IntegerField(default=0)
     total_absent_days = models.IntegerField(default=0)
     total_leave_days = models.IntegerField(default=0)
-    total_salary = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    total_salary = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
 
     def __str__(self):
         return f"{self.employee} - {self.month}/{self.year}"
-
-
+        
 class Attendance(models.Model):
     employee = models.ForeignKey(Employee, on_delete=models.CASCADE)
     date = models.DateField()

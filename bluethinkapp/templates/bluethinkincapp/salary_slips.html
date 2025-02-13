@@ -28,14 +28,14 @@
                 <tbody>
                     {% for slip in slips %}
                     <tr>
-                        <td>{{ slip.month }}</td>
+                        <td>{{ slip.month|date:"F" }}</td> <!-- Display month name (e.g., January) -->
                         <td>{{ slip.year }}</td>
-                        <td>₹{{ slip.base_salary }}</td>
+                        <td>₹{{ slip.base_salary|default:"0.00" }}</td> <!-- Default to 0 if no salary is set -->
                         <td>{{ slip.present_days }}</td>
                         <td>{{ slip.absent_days }}</td>
                         <td>{{ slip.leave_days }}</td>
-                        <td>₹{{ slip.deductions }}</td>
-                        <td><strong class="text-success">₹{{ slip.net_salary }}</strong></td>
+                        <td>₹{{ slip.deductions|default:"0.00" }}</td>
+                        <td><strong class="text-success">₹{{ slip.net_salary|default:"0.00" }}</strong></td>
                         <td>{{ slip.generated_on|date:"d M Y" }}</td>
                         <td>
                             <a href="{% url 'download_salary_slip' slip.id %}" class="btn btn-outline-primary btn-sm">
@@ -47,23 +47,6 @@
                 </tbody>
             </table>
         </div>
-    {% endif %}
-
-    {% if salary_slip %}
-    <div class="card mt-5 shadow">
-        <div class="card-header bg-primary text-white text-center">
-            <h4>Salary Slip for {{ salary_slip.employee.first_name }} {{ salary_slip.employee.last_name }}</h4>
-        </div>
-        <div class="card-body">
-            <p><strong>Month:</strong> {{ salary_slip.month }}/{{ salary_slip.year }}</p>
-            <p><strong>Present Days:</strong> {{ salary_slip.total_present_days }}</p>
-            <p><strong>Absent Days:</strong> {{ salary_slip.total_absent_days }}</p>
-            <p><strong>Leave Days:</strong> {{ salary_slip.total_leave_days }}</p>
-            <p><strong>Base Salary:</strong> ₹{{ salary_slip.base_salary }}</p>
-            <p><strong>Deductions:</strong> ₹{{ salary_slip.deductions }}</p>
-            <p><strong>Net Salary:</strong> <span class="text-success">₹{{ salary_slip.total_salary }}</span></p>
-        </div>
-    </div>
     {% endif %}
 
 </div>

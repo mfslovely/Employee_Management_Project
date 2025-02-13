@@ -133,7 +133,7 @@ class EmployeeForm(forms.ModelForm):
 class EmployeeSalaryForm(forms.ModelForm):
     class Meta:
         model = Employee
-        fields = ['salary']
+        fields = ['salary','base_salary']
 
     def clean_salary(self):
         salary = self.cleaned_data.get('salary')
