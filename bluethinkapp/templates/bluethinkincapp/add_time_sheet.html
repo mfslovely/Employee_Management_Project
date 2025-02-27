@@ -47,7 +47,7 @@
                         <!-- Ensure project_name is accessed correctly -->
                         <td>
                             {% if ts.project_assignment %}
-                                {{ts.project_assignment.project.project_name}}
+                                {{ ts.project_assignment.project.project_name }}
                             {% else %}
                                 No project assigned
                             {% endif %}
@@ -97,25 +97,17 @@
             <form method="POST">
                 {% csrf_token %}
                 {{ form.as_p }}
-                <!-- <div class="modal-body">
-                    <input type="hidden" id="projectInput" name="project">
-                    <div class="form-group">
-                        <label for="id_date">Date</label>
-                        {{ form.date }}
-                    </div>
-                    <div class="form-group">
-                        <label for="id_hours">Hours</label>
-                        {{ form.hours }}
-                    </div>
-                    <div class="form-group">
-                        <label for="id_minutes">Minutes</label>
-                        {{ form.minutes }}
-                    </div>
-                    <div class="form-group">
-                        <label for="id_description">Description</label>
-                        {{ form.description }}
-                    </div>
-                </div> -->
+                <div class="form-group">
+                    <label for="projectSelect">Select Project</label>
+                    <select name="assigned_project" id="projectSelect" class="form-control">
+                        <option value="">Select a Project</option>
+                        {% for project in employee_projects %}
+                            <option value="{{ project.id }}">{{ project.project_name }}</option>
+                        {% empty %}
+                            <option value="">No Project Assigned</option>
+                        {% endfor %}
+                    </select>
+                </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" onclick="closeTimeSheetModal()">Close</button>
                     <button type="submit" class="btn btn-primary">Save Time Sheet</button>
@@ -137,9 +129,13 @@
             <!-- Project field -->
             <div class="form-group">
                 <label for="editProject">Project</label>
-                <input type="text" name="project" id="editProject" class="form-control">
+                <select name="project" id="editProject" class="form-control">
+                    <option value="" disabled>Select Project</option>
+                    {% for project in employee_projects %}
+                        <option value="{{ project.id }}">{{ project.project_name }}</option>
+                    {% endfor %}
+                </select>
             </div>
-
             <!-- Date field -->
             <div class="form-group">
                 <label for="editDate">Date</label>

@@ -81,7 +81,9 @@ class TimeSheetForm(forms.ModelForm):
     class Meta:
         model = TimeSheet
         fields = [ 'date', 'hours', 'minutes', 'description']
-        date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
+        widgets = {
+            'date': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'})
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -101,7 +103,7 @@ class TimeSheetForm(forms.ModelForm):
 class ProjectForm(forms.ModelForm):
     class Meta:
         model = Project
-        fields = ['project_name', 'start_date', 'end_date','status','project_type','vendor_name','assigned_to']  # Include start_date in the form fields
+        fields = ['project_name', 'start_date', 'end_date','status','project_type','vendor_name']  # Include start_date in the form fields
         widgets = {
             'start_date': forms.DateInput(attrs={'type': 'date'})  # Use a date picker for the start date
         }
@@ -140,3 +142,7 @@ class EmployeeSalaryForm(forms.ModelForm):
         if salary is None or salary <= 0:
             raise forms.ValidationError('Salary must be a positive number.')
         return salary
+
+
+
+

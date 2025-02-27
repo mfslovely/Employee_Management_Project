@@ -483,7 +483,6 @@ def is_holiday(day):
 
 @login_required
 def leave_list(request):
-    # Ensure user is authenticated
     if not request.user.is_authenticated:
         return JsonResponse({'error': 'User not authenticated'}, status=401)
 
@@ -499,30 +498,28 @@ def leave_list(request):
     last_day = (first_day + timedelta(days=32)).replace(day=1) - timedelta(days=1)
     all_dates = [first_day + timedelta(days=i) for i in range((last_day - first_day).days + 1)]
 
-    # Build the calendar data
     calendar_data = {}
     for day in all_dates:
-        day_status = 'absent'  # Default to absent
-        if timesheets.filter(date=day, status='approved').exists():
+        day_status = 'absent'
+        if timesheets.filter(date=day).exists():
             day_status = 'present'
         elif timesheets.filter(date=day, status='rejected').exists():
             day_status = 'rejected'
-        elif leaves.filter(start_date__lte=day, end_date__gte=day, status='approved').exists():
+        elif leaves.filter(Q(start_date__lte=day) & (Q(end_date__gte=day) | Q(end_date=None)) & Q(status='approved')).exists():
             day_status = 'leave'
         elif day.weekday() in [5, 6]:  
             day_status = 'weekend'
         elif is_holiday(day): 
             day_status = 'holiday'
-        
 
         calendar_data[day.day] = day_status
 
-    # Check if the request is an AJAX request (via the header)
-    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-        return JsonResponse({'calendar_data': calendar_data})
-    
+    # print(calendar_data)  # Debugging
 
-    # For non-AJAX requests, render the page with the calendar data
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        print("AJAX request received")  # Debugging
+        return JsonResponse({'calendar_data': calendar_data})
+
     return render(request, 'bluethinkincapp/leave_management.html', {'calendar_data': calendar_data})
 
 
@@ -824,63 +821,56 @@ def claims(request):
 
 @login_required
 def add_time_sheet(request):
-    # Ensure employee is retrieved correctly
     try:
         employee = Employee.objects.get(user=request.user)
     except Employee.DoesNotExist:
-        # Handle case if the employee does not exist for some reason
         return HttpResponse("Employee not found", status=404)
     
     if request.method == 'POST':
         form = TimeSheetForm(request.POST)
         
         if form.is_valid():
-            # Create timesheet object but don't save it yet
             timesheet = form.save(commit=False)
-            timesheet.employee = employee  # Associate the timesheet with the logged-in employee
+            timesheet.employee = employee  
 
-            # Get the assigned project through ProjectAssignment
+            # Get assigned project ID from the form submission
             assigned_project_id = request.POST.get('assigned_project')
+
             if assigned_project_id:
                 try:
-                    # Find the ProjectAssignment for the given employee
+                    # Find ProjectAssignment that links employee to the project
                     assigned_project = ProjectAssignment.objects.get(
                         project_id=assigned_project_id,
                         employee=employee
                     )
-                    # Link the timesheet to the ProjectAssignment instead of directly to Project
-                    timesheet.project_assignment = assigned_project
+                    timesheet.project_assignment = assigned_project  # Assign correctly
                 except ProjectAssignment.DoesNotExist:
                     form.add_error('assigned_project', 'Selected project is not assigned to you.')
                     return render(request, 'bluethinkincapp/add_time_sheet.html', {
                         'form': form,
-                        'projects': Project.objects.filter(assigned_to=employee),
+                        'projects': Project.objects.filter(assignments__employee=employee),
                         'timesheet': TimeSheet.objects.filter(employee=employee),
                     })
-            # Save the timesheet to the database
+
             timesheet.save()
-            return redirect('add_time_sheet')  # Redirect after successful form submission
+            return redirect('add_time_sheet')  
         else:
-            print(form.errors)  # This will print out any form validation errors to the console
+            print(form.errors)  
+
     else:
         form = TimeSheetForm()
 
-    # Filter projects for the logged-in user
-    if request.user.is_staff:  # If the user is a manager
-        projects = Project.objects.all()  # Managers can see all projects
-    else:  # If the user is an employee
-        # Only projects assigned to the employee through ProjectAssignment
-        projects = Project.objects.filter(assignments__employee=employee)
+    # Get assigned projects correctly
+    projects = Project.objects.filter(assignments__employee=employee)
 
-    # Debugging: Print the employee and projects
     print(f"Employee: {employee.first_name} ============")
     print(f"Assigned Projects: {projects}=============")
 
     return render(request, 'bluethinkincapp/add_time_sheet.html', {
         'form': form,
-        'timesheet': TimeSheet.objects.filter(employee__user=request.user),
-        'projects': projects,  # Pass the filtered list of projects
-        'employee_projects': projects,  # Ensure employee's projects are passed to the template
+        'timesheet': TimeSheet.objects.filter(employee=employee),
+        'projects': projects,  
+        'employee_projects': projects,
     })
 
 
@@ -921,16 +911,22 @@ def add_project(request):
         form = ProjectForm(request.POST)
         if form.is_valid():
             project = form.save(commit=False)
-            project.manager = request.user       
+            project.manager = request.user  
+            
+            # If end_date is not provided, set it to today's date
+            if not project.end_date:
+                project.end_date = date.today()
+            
+            project.save()  # ✅ FIXED: Save project to the database
             return redirect('add_project')  # Redirect after successful save
         else:
-            print(form.errors)  # Log the form errors
+            print(form.errors)  # Log form errors for debugging
     else:
         form = ProjectForm()
+
     # Fetch all projects for dropdown
     projects = Project.objects.values("project_name", "vendor_name") 
-    return render(request, 'manager/add_project.html', {'form': form, 'projects': projects})                 
-
+    return render(request, 'manager/add_project.html', {'form': form, 'projects': projects})
 
 @login_required
 def manage_holidays(request):
@@ -1244,16 +1240,34 @@ class HrTimesheetView(View):
         return render(request, 'HR/manage_timesheet.html', {'timesheets': timesheets})
 
 
-def generate_salary_pdf(request, slip_id):
-    salary_slip = SalarySlip.objects.get(id=slip_id)
-    template = get_template('bluethinkincapp/salary_slips.html')
-    html = template.render({'salary_slip': salary_slip})
 
-    response = HttpResponse(content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="salary_slip_{salary_slip.month}_{salary_slip.year}.pdf"'
-    
-    pisa.CreatePDF(html, dest=response)
-    return response
+
+def generate_salary_pdf(request, slip_id):
+    try:
+        salary_slip = SalarySlip.objects.get(id=slip_id)
+
+        # Convert numeric month to full month name (e.g., 1 -> "January")
+        month_name = calendar.month_name[int(salary_slip.month)] if salary_slip.month.isdigit() else salary_slip.month
+
+        # Render the template with context
+        template = get_template('bluethinkincapp/salary_slip_pdf.html')
+        html = template.render({'salary_slip': salary_slip, 'month_name': month_name})
+
+        # Create PDF response
+        response = HttpResponse(content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="salary_slip_{month_name}_{salary_slip.year}.pdf"'
+
+        # Generate PDF
+        pisa_status = pisa.CreatePDF(html, dest=response)
+        if pisa_status.err:
+            return HttpResponse("Error generating PDF", status=500)
+
+        return response
+
+    except SalarySlip.DoesNotExist:
+        return HttpResponse("Salary slip not found", status=404)
+    except Exception as e:
+        return HttpResponse(f"An error occurred: {str(e)}", status=500)
 
 
 def employee_salary_slips(request):

@@ -53,3 +53,4 @@ def calculate_salary(employee, month, year):
         salary_slip.save()
     
     return salary_slip
+    

@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Salary Slip - {{ salary_slip.employee.first_name }} {{ salary_slip.employee.last_name }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .container { width: 100%; padding: 20px; }
+        .header { text-align: center; font-size: 18px; font-weight: bold; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        table, th, td { border: 1px solid black; padding: 8px; text-align: left; }
+        .footer { margin-top: 30px; text-align: center; font-size: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            Salary Slip - {{ salary_slip.month|date:"F" }} {{ salary_slip.year }}
+        </div>
+        <p><strong>Employee Name:</strong> {{ salary_slip.employee.first_name }} {{ salary_slip.employee.last_name }}</p>
+        <p><strong>Month:</strong>{{ month_name }}{{ salary_slip.year }}</p>
+        
+        <table>
+            <tr>
+                <th>Base Salary</th>
+                <th>Net Salary</th>
+                <th>HRA</th>
+                <th>Deductions</th>
+            </tr>
+            <tr>
+                <td>₹{{ salary_slip.basic_salary|default:"0.00" }}</td>
+                <td>₹{{ salary_slip.net_salary|default:"0.00" }}</td>
+                <td>₹{{ salary_slip.hra|default:"0.00" }}</td>
+                <td>₹{{ salary_slip.deductions|default:"0.00" }}</td>
+            </tr>
+        </table>
+        
+        <div class="footer">
+            <p>Generated on: {{ salary_slip.generated_on|date:"d M Y" }}</p>
+            <p>Company Name | Address | Contact</p>
+        </div>
+    </div>
+</body>
+</html>

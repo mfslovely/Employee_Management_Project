@@ -15,28 +15,16 @@
                     <tr>
                         <th>Month</th>
                         <th>Year</th>
-                        <th>Base Salary (₹)</th>
-                        <th>Present Days</th>
-                        <th>Absent Days</th>
-                        <th>Leave Days</th>
-                        <th>Deductions (₹)</th>
-                        <th>Net Salary (₹)</th>
-                        <th>Generated On</th>
+                        <th>Name</th>
                         <th>Download</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for slip in slips %}
                     <tr>
-                        <td>{{ slip.month|date:"F" }}</td> <!-- Display month name (e.g., January) -->
+                        <td>{{ slip.month }}</td> <!-- FIX: Use slip.month instead of month_name -->
                         <td>{{ slip.year }}</td>
-                        <td>₹{{ slip.base_salary|default:"0.00" }}</td> <!-- Default to 0 if no salary is set -->
-                        <td>{{ slip.present_days }}</td>
-                        <td>{{ slip.absent_days }}</td>
-                        <td>{{ slip.leave_days }}</td>
-                        <td>₹{{ slip.deductions|default:"0.00" }}</td>
-                        <td><strong class="text-success">₹{{ slip.net_salary|default:"0.00" }}</strong></td>
-                        <td>{{ slip.generated_on|date:"d M Y" }}</td>
+                        <td>{{ slip.employee.first_name }} {{ slip.employee.last_name }}</td> Employee Name
                         <td>
                             <a href="{% url 'download_salary_slip' slip.id %}" class="btn btn-outline-primary btn-sm">
                                 <i class="fa fa-file-pdf"></i> PDF

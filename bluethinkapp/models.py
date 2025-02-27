@@ -380,7 +380,7 @@ class Project(models.Model):
     status = models.CharField(max_length=50, choices=[('active', 'Active'), ('inactive', 'Inactive')])
     project_type = models.CharField(max_length=50, choices=[('billable', 'Billable'), ('non_billable', 'Non-Billable')], default='Billable')
     start_date = models.DateField()
-    end_date = models.DateField()
+    end_date = models.DateField(null=True, blank=True)
     
     STATUS_CHOICES = [
         ('active', 'Active'),
@@ -479,6 +479,7 @@ class AssignedDevice(models.Model):
     
     def __str__(self):
         return f"{self.asset.asset_name} assigned to {self.employee.first_name}"
+
 
 
 
