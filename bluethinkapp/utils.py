@@ -17,19 +17,24 @@ def calculate_salary(employee, month, year):
     for day in range(1, last_day.day + 1):
         current_date = date(year, month, day)
         
-        # Determine status based on timesheets and leaves
-        timesheets = TimeSheet.objects.filter(employee=employee, date=current_date, status='approved')
-        leaves = Leave.objects.filter(employee=employee, start_date__lte=current_date, end_date__gte=current_date, status='approved')
-        
+        # Fetch timesheets
+        timesheets = TimeSheet.objects.filter(employee=employee, date=current_date, status='Approved')
+        leaves = Leave.objects.filter(employee=employee, start_date__lte=current_date, end_date__gte=current_date, status='Approved')
+
+        print(f"Checking {current_date}:")
+        print(f"  Timesheets: {timesheets.count()}")
+        print(f"  Leaves: {leaves.count()}")
+
         if timesheets.exists():
             total_present += 1
         elif leaves.exists():
             total_leave += 1
         elif current_date.weekday() in [5, 6] or is_holiday(current_date):  # Weekend or Holiday
+            print(f"  Skipped: Weekend/Holiday")
             continue
         else:
             total_absent += 1
-    
+
     # Calculate salary
     salary_per_day = employee.salary_per_day
     total_salary = (total_present + total_leave) * salary_per_day  # Paid leaves included
@@ -53,4 +58,3 @@ def calculate_salary(employee, month, year):
         salary_slip.save()
     
     return salary_slip
-    

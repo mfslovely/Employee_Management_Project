@@ -1,15 +1,15 @@
 {% extends 'base.html' %}
-
+{% block title %}Salary Slips {% endblock %}
 {% block content %}
 <div class="container mt-4">
     <h2 class="text-center text-primary mb-4">My Salary Slips</h2>
-
+        
     {% if no_slip_message %}
         <div class="alert alert-warning text-center">
             <strong>{{ no_slip_message }}</strong>
         </div>
     {% else %}
-        <div class="table-responsive">
+        <div class="">
             <table class="table table-striped table-bordered text-center">
                 <thead class="table-dark">
                     <tr>

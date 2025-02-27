@@ -14,6 +14,18 @@ from django.utils import timezone
 from datetime import timedelta,date
 import datetime 
 from dateutil.relativedelta import relativedelta
+import calendar
+
+
+HOLIDAYS = {
+    "2025-01-01",  # New Year
+    "2025-12-25",  # Christmas
+    "2025-07-04",  # Independence Day
+    # Add more holidays here
+}
+
+def is_holiday(date_obj):
+    return date_obj.strftime("%Y-%m-%d") in HOLIDAYS
 
 @shared_task
 def check_login_and_notify(user_id):
@@ -64,7 +76,6 @@ def generate_salary_slips():
             continue  # Skip employees without a base salary
 
         joining_date = employee.date_of_joining
-       
         if not joining_date:
             continue  # Skip if no joining date
 
@@ -76,103 +87,68 @@ def generate_salary_slips():
 
         while (salary_year < current_year) or (salary_year == current_year and salary_month < current_month):
             generate_salary_for_month(employee, salary_month, salary_year)
-            
+
             next_month = date(salary_year, salary_month, 1) + relativedelta(months=1)
             salary_month = next_month.month
             salary_year = next_month.year
 
 def generate_salary_for_month(employee, month, year):
-    pdb.set_trace()  # Debug: Inspect function call parameters
+    month_name = calendar.month_name[month]  # Convert number to name ("January", "December")
 
+    # Fetch all timesheets for the employee in the given month (any status)
     timesheets = TimeSheet.objects.filter(employee=employee, date__month=month, date__year=year)
-    leaves = Leave.objects.filter(employee=employee, start_date__month=month, start_date__year=year)
-    
-    present_days = timesheets.filter(status="Approved").count()
-    absent_days = timesheets.filter(status="Rejected").count()
 
-    leave_days = sum((leave.end_date - leave.start_date).days + 1 for leave in leaves if leave.status == "Approved")
+    last_day = calendar.monthrange(year, month)[1]  # Get the last day of the month
+    start_date__lte = date(year, month, last_day)
 
+    # Fetch all approved leaves that overlap with the month
+    leaves = Leave.objects.filter(
+        employee=employee,
+        start_date__lte=start_date__lte, 
+        end_date__gte=start_date__lte,
+        status="Approved"
+    )
+
+    # Calculate number of leave days
+    leave_days = sum((leave.end_date - leave.start_date).days + 1 for leave in leaves)
+
+    # Get all days in the month
+    total_present = timesheets.count()  # Count all filled timesheets
+    print(total_present,"total presnt")
+    total_leave = leave_days
+    print(total_leave,"total leave")
+    total_absent = 0
+    print(total_absent,"gdjkfdfjknhi")
+
+    first_day = date(year, month, 1)
+    last_day = date(year, month, last_day)
+
+    for day in range(1, last_day.day + 1):
+        current_date = date(year, month, day)
+        
+        if not timesheets.filter(date=current_date).exists() and not leaves.filter(start_date__lte=current_date, end_date__gte=current_date).exists():
+            if current_date.weekday() not in [5, 6]:  # Only count weekdays as absent
+                total_absent += 1
+
+    # Salary calculations
     base_salary = employee.base_salary or Decimal("0.00")
-    
-
     salary_per_day = base_salary / Decimal("30")
-      
-
-    deductions = absent_days * salary_per_day
-    
+    deductions = total_absent * salary_per_day
     total_salary = max(base_salary - deductions, Decimal("0.00"))
-    
-    month_name = date(year, month, 1).strftime("%B")
-   
 
+    # ✅ **Fix: Ensure `month` is always stored as a month name**
     SalarySlip.objects.update_or_create(
         employee=employee,
-        month=month_name,
+        month=month_name,  # Always store as "January", "December", etc.
         year=year,
         defaults={
             'basic_salary': base_salary,
             'hra': base_salary * Decimal("0.2"),
             'deductions': deductions,
             'net_salary': total_salary,
-            'total_present_days': present_days,
-            'total_absent_days': absent_days,
-            'total_leave_days': leave_days,
+            'total_present_days': total_present,
+            'total_absent_days': total_absent,
+            'total_leave_days': total_leave,
             'total_salary': total_salary
         }
     )
-    
-
-
-# @shared_task
-# def generate_salary_slips():
-#     today = date.today()
-#     previous_month = today - relativedelta(months=1)
-#     month = previous_month.month
-#     year = previous_month.year
-
-#     employees = Employee.objects.all()
-
-#     for employee in employees:
-#         if employee.salary is None:
-#             continue  # Skip employees with no salary set
-
-#         # Fetch records for the previous month
-#         timesheets = TimeSheet.objects.filter(employee=employee, date__month=month, date__year=year)
-#         leaves = Leave.objects.filter(employee=employee, start_date__month=month, start_date__year=year)
-
-#         # Count present and absent days based on status
-#         present_days = timesheets.filter(status="Approved").count()
-#         absent_days = timesheets.filter(status="Rejected").count()
-
-#         # Calculate total leave days
-#         leave_days = sum((leave.end_date - leave.start_date).days + 1 for leave in leaves if leave.status == "Approved")
-
-#         # Calculate salary details
-#         base_salary = employee.salary or Decimal("0.00")  # Use employee salary or zero
-#         print(base_salary,"base salary ==")
-#         salary_per_day = base_salary / 30 # Assuming 30 days in a month
-
-#         print(salary_per_day,"=================== hello")  
-#         deductions = absent_days * salary_per_day
-#         print(deductions,"Dedection")
-#         total_salary = base_salary - deductions
-
-#         # Ensure values are not negative
-#         total_salary = max(total_salary, Decimal("0.00"))
-
-#         # Create or update the salary slip for the employee
-#         SalarySlip.objects.update_or_create(
-#             employee=employee,
-#             month=str(month),  # Convert month number to name if needed
-#             year=year,
-#             defaults={
-#                 'basic_salary': base_salary,
-#                 'hra': base_salary * Decimal("0.2"),  # Assuming 20% HRA
-#                 'deductions': deductions,
-#                 'net_salary': total_salary,
-#                 'total_present_days': present_days,
-#                 'total_absent_days': absent_days,
-#                 'total_leave_days': leave_days,
-#                 'total_salary': total_salary
-#             }
-#         )
