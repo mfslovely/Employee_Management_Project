@@ -1332,3 +1332,16 @@ def manage_salaries(request):
         return redirect('manage_salaries')  # Redirect to the same page after updating
 
     return render(request, 'bluethinkincapp/manage_salaries.html', {'employees': employees})
+
+
+def is_admin_or_director(user):
+    return user.is_authenticated and (user.role == 'Admin' or user.role == 'Director')
+
+@login_required
+@user_passes_test(is_admin_or_director)
+def employee_detail(request, employee_id):
+    employee = get_object_or_404(Employee, id=employee_id)
+    context = {
+        'employee': employee
+    }
+    return render(request, 'employee_detail.html', context)

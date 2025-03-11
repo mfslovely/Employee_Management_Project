@@ -231,6 +231,7 @@
         <a href="{% url 'add_time_sheet' %}"><i class="fas fa-clock"></i> Time Sheet</a>
         <a href="{% url 'claims' %}"><i class="fas fa-file-invoice"></i> Claims</a>
         <a href="{% url 'salary_slips' %}"><i class="fas fa-file-invoice"></i> Salary slip</a>
+        <a href="{% url 'logout_for_the_day' %}"><i class="fas fa-file-invoice"></i> Sign Out </a>
 
     {% elif request.user.employee.role.name == "Manager" %}
         <a href="{% url 'manager_dashboard' %}" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
@@ -245,6 +246,7 @@
         <a href="{% url 'manager_approve_timesheet' %}"><i class="fas fa-check-circle"></i> Approve TimeSheet</a>
         <a href="{% url 'manage_assign_projects' %}"><i class="fas fa-check-circle"></i> Assign Projects </a>
         <a href="{% url 'salary_slips' %}"><i class="fas fa-file-invoice"></i> Salary slip</a>
+        <a href="{% url 'logout_for_the_day' %}"><i class="fas fa-file-invoice"></i> Sign Out </a>
         
 
     {% elif request.user.employee.role.name == "Director" %}
@@ -253,6 +255,7 @@
         <a href="{% url 'assign_manager' %}"><i class="fas fa-calendar-day"></i> Manage Manger </a>
         <a href="#"><i class="fas fa-building"></i> Company Overview</a> 
         <a href="#"><i class="fas fa-chart-line"></i> Strategic Planning</a>
+        <a href="{% url 'logout_for_the_day' %}"><i class="fas fa-file-invoice"></i> Sign Out </a>
 
     {% elif request.user.employee.role.name == "HR" %}
         <a href="{% url 'employee_profile' %}"><i class="fas fa-user"></i> My Profile</a>
@@ -266,10 +269,12 @@
         <a href="{% url 'Hr_dashboard' %}" class="active"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
         <a href="{% url 'Hr_leave_list' %}"><i class="fas fa-users"></i> Employee Leave List</a>
         <a href="#"><i class="fas fa-chalkboard-teacher"></i> Recruitment Dashboard</a>
+        <a href="{% url 'logout_for_the_day' %}"><i class="fas fa-file-invoice"></i> Sign Out </a>
 
     {% elif request.user.employee.role.name == "Admin" %}
         <a href="{% url 'admin_dashboard' %}" class="active"><i class="fas fa-chalkboard-teacher"></i> Admin Dashboard</a>
         <a href="{% url 'assign_device' %}"><i class="fas fa-chalkboard-teacher"></i> Assign Devices</a>
+        <a href="{% url 'logout_for_the_day' %}"><i class="fas fa-file-invoice"></i> Sign Out </a>
 
     {% endif %}
 

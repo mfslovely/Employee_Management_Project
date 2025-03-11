@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<h2>{{ employee.first_name }} {{ employee.last_name }}</h2>
+<p><strong>Email:</strong> {{ employee.email }}</p>
+<p><strong>Role:</strong> {{ employee.role }}</p>
+<p><strong>Department:</strong> {{ employee.department.name }}</p>
+<p><strong>Joining Date:</strong> {{ employee.joining_date }}</p>
+
+<h3>Assigned Projects:</h3>
+<ul>
+    {% for project in employee.projects.all %}
+        <li>{{ project.name }} ({{ project.status }})</li>
+    {% endfor %}
+</ul>
+{% endblock %}

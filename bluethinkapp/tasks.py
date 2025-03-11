@@ -152,3 +152,6 @@ def generate_salary_for_month(employee, month, year):
             'total_salary': total_salary
         }
     )
+
+
+    
